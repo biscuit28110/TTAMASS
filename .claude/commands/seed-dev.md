@@ -5,6 +5,17 @@ Génère des données de test réalistes pour le développement TTAMASS.
 ## Arguments attendus
 `/seed-dev` — génère un jeu complet de données de dev
 
+## Questions à poser AVANT de générer
+
+Si l'un de ces points n'est pas précisé, **pose les questions** :
+
+1. **Quel profil utilisateur type ?** (homme/femme, poids, objectif, niveau activité)
+2. **Sur combien de jours de données ?** (7 jours, 14 jours, 1 mois ?)
+3. **Un module spécifique à seeder** ou tout à la fois ? (nutrition seule, sport seul, tout)
+4. **Pour tester un cas particulier ?** (ex: user en dépassement calorique, plateau de poids, PR sur un exercice)
+
+Des données ciblées permettent de tester des cas précis plutôt que du bruit générique.
+
 ## Ce que tu dois faire
 
 1. **Créer** `backend/prisma/seed-dev.ts` avec des données réalistes :

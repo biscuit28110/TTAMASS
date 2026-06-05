@@ -5,6 +5,18 @@ Modifie le schéma Prisma et prépare la migration pour TTAMASS.
 ## Arguments attendus
 `/db-migrate <description>` — ex: `/db-migrate add-notifications-table`
 
+## Questions à poser AVANT de modifier le schéma
+
+Si l'un de ces points n'est pas clair, **pose les questions** :
+
+1. **Le champ/table est-il obligatoire ou optionnel ?** (impact sur les données existantes)
+2. **Des valeurs par défaut ?** Pour les champs ajoutés sur une table déjà peuplée
+3. **Relations avec d'autres tables ?** (clé étrangère, cascade delete ?)
+4. **Ce champ sera filtré/trié souvent ?** (décision d'ajouter un index)
+5. **C'est une modification temporaire ou permanente ?** (choisir push vs migrate)
+
+Ne suppose pas — une migration destructive est irréversible en production.
+
 ## Ce que tu dois faire
 
 1. **Analyser** l'impact de la modification demandée sur le schéma existant

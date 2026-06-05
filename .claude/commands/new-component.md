@@ -5,6 +5,18 @@ Crée un nouveau composant React Native réutilisable pour TTAMASS.
 ## Arguments attendus
 `/new-component <nom>` — ex: `/new-component macro-ring`
 
+## Questions à poser AVANT de coder
+
+Si l'un de ces points n'est pas clair, **pose les questions** :
+
+1. **Quelles données reçoit le composant en props ?** (valeurs actuelles, objectifs, unités)
+2. **Est-ce interactif ?** (cliquable, swipeable, avec input ?) ou purement visuel ?
+3. **Dans quel(s) écran(s) sera-t-il utilisé ?** (pour adapter la taille et le contexte)
+4. **Des états différents à afficher ?** (vide, chargement, succès, dépassement d'objectif)
+5. **Taille fixe ou flexible ?** (fullwidth, taille fixe en px, ratio de l'écran ?)
+
+Un composant bien cerné dès le départ est réutilisable sans modification.
+
 ## Ce que tu dois faire
 
 1. **Créer** `mobile/components/<categorie>/<NomComponent>.tsx`

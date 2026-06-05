@@ -5,6 +5,18 @@ Crée une nouvelle route API Next.js pour TTAMASS.
 ## Arguments attendus
 `/new-route <nom-ressource>` — ex: `/new-route food-entries`
 
+## Questions à poser AVANT de coder
+
+Si l'un de ces points n'est pas clair dans le prompt, **pose les questions** avant de générer du code :
+
+1. **Quelles méthodes HTTP ?** (GET seul, GET+POST, CRUD complet ?)
+2. **Quels champs attendus** dans le body / les query params ?
+3. **Des règles métier spécifiques ?** (ex: limite journalière, vérification de quota Free/Premium, calculs automatiques)
+4. **La ressource est-elle liée à une autre ?** (ex: une FoodEntry dépend d'un Food existant)
+5. **Pagination nécessaire ?** (pour les listes longues : historique, recherche)
+
+Ne suppose pas — mieux vaut une question de plus qu'une route à refaire.
+
 ## Ce que tu dois faire
 
 1. **Identifier le module** à partir du nom : nutrition / body / sport / auth / ai

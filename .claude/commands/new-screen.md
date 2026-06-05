@@ -5,6 +5,19 @@ Crée un nouvel écran React Native / Expo pour TTAMASS.
 ## Arguments attendus
 `/new-screen <nom-ecran>` — ex: `/new-screen nutrition-log`
 
+## Questions à poser AVANT de coder
+
+Si l'un de ces points n'est pas clair dans le prompt, **pose les questions** :
+
+1. **Quelle est l'action principale** de cet écran ? (consulter, saisir, valider, comparer ?)
+2. **Quelles données afficher ?** Viennent-elles de l'API ou du state local ?
+3. **Y a-t-il un formulaire ?** Si oui, quels champs et quelles validations ?
+4. **Navigation** : depuis quel écran arrive-t-on ici ? Vers où peut-on aller ?
+5. **Interactions spéciales ?** (swipe pour supprimer, modal, bottom sheet, graphique, caméra...)
+6. **Différence Free vs Premium ?** Certaines parties doivent-elles être bloquées ?
+
+Ne suppose pas — un écran mal cerné = un refactor coûteux.
+
 ## Ce que tu dois faire
 
 1. **Créer le fichier** `mobile/app/<section>/<nom>.tsx`
