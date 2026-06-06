@@ -41,18 +41,9 @@ export default function HomeScreen() {
           <Text style={{ color: Colors.textSecondary, fontSize: FontSize.sm }}>{greeting()} 👋</Text>
           <Text style={{ color: Colors.textPrimary, fontSize: FontSize.lg, fontWeight: "800" }}>TTAMASS</Text>
         </View>
-        {loading ? <SkeletonBlock width={40} height={40} borderRadius={20} /> : (
-          latestWeight && (
-            <View style={{ backgroundColor: Colors.surface, borderRadius: 12, padding: Spacing.sm, alignItems: "center", minWidth: 64, borderWidth: 1, borderColor: Colors.border }}>
-              <Text style={{ color: Colors.textPrimary, fontWeight: "800", fontSize: FontSize.md }}>{latestWeight} kg</Text>
-              {weightTrend !== null && (
-                <Text style={{ fontSize: 10, color: weightTrend <= 0 ? Colors.success : Colors.error }}>
-                  {weightTrend > 0 ? "+" : ""}{weightTrend.toFixed(1)} kg
-                </Text>
-              )}
-            </View>
-          )
-        )}
+        <TouchableOpacity onPress={() => router.push("/profile")} style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border, justifyContent: "center", alignItems: "center" }}>
+          <Text style={{ fontSize: 18 }}>👤</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Calories restantes */}

@@ -13,6 +13,10 @@ export interface UserProfile {
   targetProteinG: number | null;
   targetCarbsG: number | null;
   targetFatG: number | null;
+  plan: "FREE" | "PREMIUM";
+  weightKg: number | null;
+  heightCm: number | null;
+  goal: string | null;
 }
 
 export interface BodyMetric {
