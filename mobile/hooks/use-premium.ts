@@ -1,19 +1,17 @@
 import { useState, useCallback } from "react";
-import { Alert } from "react-native";
+import { Alert, Platform } from "react-native";
+import Purchases, { LOG_LEVEL } from "react-native-purchases";
 import { api } from "@/lib/api/client";
-import { profileApi } from "@/lib/api/nutrition";
 
-// Stub purchase result — wire to RevenueCat / StoreKit when ready
-async function purchasePremium(): Promise<{ success: boolean; receiptData?: string }> {
-  // TODO: replace with Purchases.purchasePackage(pkg) from react-native-purchases
-  // import Purchases from 'react-native-purchases';
-  // const offerings = await Purchases.getOfferings();
-  // const pkg = offerings.current?.monthly;
-  // if (!pkg) throw new Error('No offerings');
-  // const { customerInfo } = await Purchases.purchasePackage(pkg);
-  // const active = customerInfo.entitlements.active['premium'];
-  // return { success: !!active };
-  return { success: true }; // sandbox stub
+const RC_API_KEY_IOS = process.env.EXPO_PUBLIC_RC_API_KEY_IOS ?? "";
+const RC_API_KEY_ANDROID = process.env.EXPO_PUBLIC_RC_API_KEY_ANDROID ?? "";
+
+export function initRevenueCat(userId: string) {
+  const apiKey = Platform.OS === "ios" ? RC_API_KEY_IOS : RC_API_KEY_ANDROID;
+  if (!apiKey) return;
+  Purchases.setLogLevel(LOG_LEVEL.ERROR);
+  Purchases.configure({ apiKey });
+  Purchases.logIn(userId);
 }
 
 export function usePremium() {
@@ -24,18 +22,19 @@ export function usePremium() {
     setLoading(true);
     setError(null);
     try {
-      const result = await purchasePremium();
-      if (!result.success) return false;
+      const offerings = await Purchases.getOfferings();
+      const pkg = offerings.current?.monthly;
+      if (!pkg) throw new Error("Aucune offre disponible");
 
-      await api.post("/api/auth/profile/upgrade", {
-        plan: "PREMIUM",
-        receiptData: result.receiptData,
-      });
+      const { customerInfo } = await Purchases.purchasePackage(pkg);
+      const isPremium = !!customerInfo.entitlements.active["premium"];
+      if (!isPremium) return false;
+
+      await api.post("/api/auth/profile/upgrade", { plan: "PREMIUM" });
       return true;
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : "Erreur d'achat";
-      // User cancelled is not an error worth showing
-      if (!msg.includes("cancel") && !msg.includes("Cancel")) {
+      if (!msg.toLowerCase().includes("cancel")) {
         setError(msg);
         Alert.alert("Erreur", msg);
       }
@@ -49,10 +48,17 @@ export function usePremium() {
     setLoading(true);
     setError(null);
     try {
-      // TODO: const { customerInfo } = await Purchases.restorePurchases();
-      // Check entitlements and sync to backend
-      const profile = await profileApi.get();
-      return profile.plan === "PREMIUM";
+      const customerInfo = await Purchases.restorePurchases();
+      const isPremium = !!customerInfo.entitlements.active["premium"];
+
+      await api.post("/api/auth/profile/upgrade", {
+        plan: isPremium ? "PREMIUM" : "FREE",
+      });
+
+      if (!isPremium) {
+        Alert.alert("Aucun abonnement actif", "Aucun achat Premium trouvé sur ce compte.");
+      }
+      return isPremium;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur");
       return false;

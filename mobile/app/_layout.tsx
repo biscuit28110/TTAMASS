@@ -6,14 +6,21 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { initRevenueCat } from "@/hooks/use-premium";
 
 function AuthGuard() {
-  const { isAuthenticated, isLoading, restoreSession } = useAuthStore();
+  const { userId, isAuthenticated, isLoading, restoreSession } = useAuthStore();
   const segments = useSegments();
 
   useEffect(() => {
     restoreSession();
   }, []);
+
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      initRevenueCat(userId);
+    }
+  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     if (isLoading) return;
