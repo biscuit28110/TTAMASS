@@ -1,7 +1,6 @@
 import "dotenv/config";
-import { PrismaClient, MuscleGroup } from "@prisma/client";
-
-const prisma = new PrismaClient({ datasources: { db: { url: process.env.DATABASE_URL } } });
+import { MuscleGroup } from "@prisma/client";
+import { prisma } from "../lib/prisma";
 
 const exercises = [
   // CHEST
