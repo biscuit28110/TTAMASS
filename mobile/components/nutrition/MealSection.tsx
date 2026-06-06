@@ -1,4 +1,5 @@
 import { View, Text, TouchableOpacity } from "react-native";
+import { router } from "expo-router";
 import { Colors, FontSize, Spacing } from "@/constants/theme";
 import { FoodEntry, MealType } from "@/hooks/use-nutrition";
 import { FoodEntryRow } from "./FoodEntryRow";
@@ -28,6 +29,12 @@ export function MealSection({ meal, entries, onAdd, onDelete }: Props) {
         <Text style={{ fontSize: 16 }}>{emoji}</Text>
         <Text style={{ flex: 1, color: Colors.textSecondary, fontSize: FontSize.sm, fontWeight: "600", marginLeft: Spacing.sm }}>{label}</Text>
         {total > 0 && <Text style={{ color: Colors.textMuted, fontSize: FontSize.xs }}>{Math.round(total)} kcal</Text>}
+        <TouchableOpacity
+          onPress={() => router.push({ pathname: "/nutrition/vision", params: { meal } })}
+          style={{ marginLeft: Spacing.sm, width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.surface2, alignItems: "center", justifyContent: "center", borderWidth: 1, borderColor: Colors.border }}
+        >
+          <Text style={{ fontSize: 14, lineHeight: 18 }}>📷</Text>
+        </TouchableOpacity>
         <TouchableOpacity
           onPress={() => onAdd(meal)}
           style={{ marginLeft: Spacing.sm, width: 28, height: 28, borderRadius: 14, backgroundColor: Colors.red, alignItems: "center", justifyContent: "center" }}
