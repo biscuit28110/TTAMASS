@@ -67,8 +67,8 @@ export async function POST(req: NextRequest) {
   ]);
 
   const allDates = [
-    ...foodDays.map((e) => e.date),
-    ...workoutDays.map((s) => s.date),
+    ...foodDays.map((e) => e.date.toISOString().split("T")[0]),
+    ...workoutDays.map((s) => s.date.toISOString().split("T")[0]),
   ];
 
   const { current, longest } = calculateStreak(allDates);
