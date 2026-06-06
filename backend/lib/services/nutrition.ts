@@ -1,6 +1,6 @@
 import { MealType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
-import { DailySummaryDto, FoodEntryDto } from "@/types/nutrition";
+import { DailySummaryDto, DayHistoryDto, FoodEntryDto } from "@/types/nutrition";
 
 export async function getDailySummary(
   userId: string,
@@ -59,6 +59,64 @@ export async function getDailySummary(
     },
     byMeal,
   };
+}
+
+export async function getHistorySummary(
+  userId: string,
+  days: number
+): Promise<DayHistoryDto[]> {
+  const now = new Date();
+  const rangeEnd = new Date(now);
+  rangeEnd.setHours(23, 59, 59, 999);
+  const rangeStart = new Date(now);
+  rangeStart.setDate(rangeStart.getDate() - (days - 1));
+  rangeStart.setHours(0, 0, 0, 0);
+
+  const [entries, profile] = await Promise.all([
+    prisma.foodEntry.findMany({
+      where: { userId, date: { gte: rangeStart, lte: rangeEnd } },
+      select: { date: true, calories: true, proteinG: true, carbsG: true, fatG: true },
+    }),
+    prisma.userProfile.findUnique({
+      where: { userId },
+      select: { targetCalories: true, targetProteinG: true, targetCarbsG: true, targetFatG: true },
+    }),
+  ]);
+
+  const byDate = new Map<string, { calories: number; proteinG: number; carbsG: number; fatG: number; count: number }>();
+  for (const entry of entries) {
+    const dateStr = entry.date.toISOString().split("T")[0];
+    const existing = byDate.get(dateStr) ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0, count: 0 };
+    byDate.set(dateStr, {
+      calories: existing.calories + entry.calories,
+      proteinG: existing.proteinG + entry.proteinG,
+      carbsG: existing.carbsG + entry.carbsG,
+      fatG: existing.fatG + entry.fatG,
+      count: existing.count + 1,
+    });
+  }
+
+  const targets = {
+    calories: profile?.targetCalories ?? null,
+    proteinG: profile?.targetProteinG ?? null,
+    carbsG: profile?.targetCarbsG ?? null,
+    fatG: profile?.targetFatG ?? null,
+  };
+
+  return Array.from({ length: days }, (_, i) => {
+    const d = new Date(now);
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split("T")[0];
+    const day = byDate.get(dateStr);
+    return {
+      date: dateStr,
+      totals: day
+        ? { calories: day.calories, proteinG: day.proteinG, carbsG: day.carbsG, fatG: day.fatG }
+        : { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 },
+      targets,
+      entryCount: day?.count ?? 0,
+    };
+  });
 }
 
 export function calculateMacros(
