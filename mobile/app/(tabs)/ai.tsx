@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, KeyboardAvoidingView, Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
 import { useAi } from "@/hooks/use-ai";
 import { AiMessage } from "@/lib/api/ai";
@@ -121,9 +122,18 @@ export default function AiScreen() {
           {sending && <TypingIndicator />}
 
           {limitReached && (
-            <View style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: Spacing.lg, borderWidth: 1, borderColor: Colors.error, marginTop: Spacing.sm }}>
-              <Text style={{ color: Colors.error, fontWeight: "700", fontSize: FontSize.sm, marginBottom: 4 }}>Limite journalière atteinte</Text>
-              <Text style={{ color: Colors.textMuted, fontSize: FontSize.xs }}>Tu as utilisé tes 5 messages gratuits aujourd'hui. Reviens demain ou passe Premium pour un accès illimité.</Text>
+            <View style={{ backgroundColor: Colors.surface, borderRadius: 16, padding: Spacing.xl, alignItems: "center", borderWidth: 1, borderColor: Colors.violet + "44", marginTop: Spacing.sm }}>
+              <Text style={{ fontSize: 32, marginBottom: Spacing.sm }}>⭐</Text>
+              <Text style={{ color: Colors.textPrimary, fontWeight: "700", fontSize: FontSize.md, textAlign: "center", marginBottom: 4 }}>Limite journalière atteinte</Text>
+              <Text style={{ color: Colors.textMuted, fontSize: FontSize.xs, textAlign: "center", marginBottom: Spacing.lg, lineHeight: 18 }}>
+                Tu as utilisé tes 5 messages gratuits aujourd'hui. Passe Premium pour un accès illimité au Coach IA.
+              </Text>
+              <TouchableOpacity
+                onPress={async () => { await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium); router.push("/paywall"); }}
+                style={{ backgroundColor: Colors.violet, borderRadius: 12, paddingHorizontal: Spacing.xl, paddingVertical: Spacing.md }}
+              >
+                <Text style={{ color: "#fff", fontWeight: "700", fontSize: FontSize.sm }}>Voir Premium · 7,99 €/mois</Text>
+              </TouchableOpacity>
             </View>
           )}
 

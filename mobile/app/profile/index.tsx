@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, ActivityIndicator, Linking } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import * as Haptics from "expo-haptics";
@@ -164,6 +164,20 @@ export default function ProfileScreen() {
             </View>
           )}
         </View>
+
+        {/* Premium upsell (Free only) */}
+        {!loading && profile?.plan === "FREE" && (
+          <TouchableOpacity
+            onPress={() => router.push("/paywall")}
+            style={{ backgroundColor: Colors.violet, borderRadius: 16, padding: Spacing.lg, flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: Spacing.md }}
+          >
+            <View>
+              <Text style={{ color: "#fff", fontWeight: "800", fontSize: FontSize.md }}>⭐ Passer à Premium</Text>
+              <Text style={{ color: "rgba(255,255,255,0.7)", fontSize: FontSize.xs, marginTop: 2 }}>Coach IA illimité · Photos · Export</Text>
+            </View>
+            <Text style={{ color: "#fff", fontSize: FontSize.lg }}>→</Text>
+          </TouchableOpacity>
+        )}
 
         {error && <Text style={{ color: Colors.error, textAlign: "center", marginBottom: Spacing.md }}>{error}</Text>}
 
