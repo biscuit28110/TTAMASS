@@ -44,7 +44,17 @@ export default function FoodSearchScreen() {
             style={{ color: Colors.textPrimary, fontSize: FontSize.md, fontWeight: "600", padding: 0 }}
           />
         </View>
-        {searching && <ActivityIndicator color={Colors.red} size="small" />}
+        {searching
+          ? <ActivityIndicator color={Colors.red} size="small" />
+          : (
+            <TouchableOpacity
+              onPress={() => router.push({ pathname: "/nutrition/scan", params: { meal: meal ?? "LUNCH" } })}
+              style={{ backgroundColor: Colors.surface, borderRadius: 10, padding: Spacing.sm, borderWidth: 1, borderColor: Colors.border }}
+            >
+              <Text style={{ fontSize: 20 }}>📷</Text>
+            </TouchableOpacity>
+          )
+        }
       </View>
 
       <View style={{ height: 1, backgroundColor: Colors.border }} />
