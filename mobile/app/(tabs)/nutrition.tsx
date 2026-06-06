@@ -43,9 +43,17 @@ export default function NutritionScreen() {
       refreshControl={<RefreshControl refreshing={loading} onRefresh={() => load()} tintColor={Colors.red} />}
     >
       {/* Header */}
-      <Text style={{ fontSize: FontSize.lg, fontWeight: "800", color: Colors.textPrimary, marginBottom: Spacing.xs }}>
-        Nutrition
-      </Text>
+      <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: Spacing.xs }}>
+        <Text style={{ fontSize: FontSize.lg, fontWeight: "800", color: Colors.textPrimary }}>
+          Nutrition
+        </Text>
+        <TouchableOpacity
+          onPress={() => router.push("/nutrition/history")}
+          style={{ backgroundColor: Colors.surface, paddingHorizontal: Spacing.sm, paddingVertical: 6, borderRadius: 8, borderWidth: 1, borderColor: Colors.border }}
+        >
+          <Text style={{ color: Colors.textSecondary, fontSize: FontSize.xs }}>Historique</Text>
+        </TouchableOpacity>
+      </View>
       <Text style={{ color: Colors.textSecondary, fontSize: FontSize.sm, marginBottom: Spacing.lg }}>
         {new Date().toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}
       </Text>

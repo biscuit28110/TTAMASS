@@ -27,6 +27,23 @@ export interface FoodEntryDto {
   fatG: number;
 }
 
+export interface DayHistoryDto {
+  date: string;
+  totals: {
+    calories: number;
+    proteinG: number;
+    carbsG: number;
+    fatG: number;
+  };
+  targets: {
+    calories: number | null;
+    proteinG: number | null;
+    carbsG: number | null;
+    fatG: number | null;
+  };
+  entryCount: number;
+}
+
 export interface DailySummaryDto {
   date: string;
   totals: {
