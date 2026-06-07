@@ -10,7 +10,7 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { summary, profile, loading, error, caloriesLeft, latestWeight, weightTrend, refresh } = useHome();
 
-  const targets = summary?.targets ?? profile ?? null;
+  const targets = summary?.targets ?? null;
   const totals = summary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
 
   const greeting = () => {

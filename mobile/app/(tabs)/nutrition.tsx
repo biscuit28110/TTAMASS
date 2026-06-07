@@ -34,7 +34,7 @@ export default function NutritionScreen() {
   );
 
   const totals = data?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
-  const targets = data?.targets ?? {};
+  const targets = data?.targets ?? { calories: null, proteinG: null, carbsG: null, fatG: null };
 
   return (
     <ScrollView
