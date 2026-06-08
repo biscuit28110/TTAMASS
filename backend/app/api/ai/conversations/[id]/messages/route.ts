@@ -78,12 +78,23 @@ export async function POST(
   });
 
   // Appel Groq
-  const { reply, inputTokens, outputTokens } = await streamCoachReply(
-    id,
-    parsed.data.content,
-    systemPrompt,
-    history
-  );
+  let reply: string;
+  let inputTokens: number;
+  let outputTokens: number;
+  try {
+    ({ reply, inputTokens, outputTokens } = await streamCoachReply(
+      id,
+      parsed.data.content,
+      systemPrompt,
+      history
+    ));
+  } catch (err) {
+    console.error("[AI] Groq error:", err);
+    return NextResponse.json(
+      { error: "Le coach IA est temporairement indisponible. Vérifie la clé GROQ_API_KEY." },
+      { status: 503 }
+    );
+  }
 
   // Sauvegarde de la réponse IA
   const aiMessage = await prisma.aiMessage.create({
