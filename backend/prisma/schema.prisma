@@ -305,7 +305,7 @@ model AiConversation {
   updatedAt DateTime @updatedAt
 
   userId String
-  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   messages AiMessage[]
 
