@@ -39,6 +39,7 @@ export default function RootLayout() {
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A0A" } }}>
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
+            <Stack.Screen name="onboarding" />
             <Stack.Screen name="profile" />
             <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
           </Stack>

@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { router } from "expo-router";
 import { nutritionApi, profileApi, bodyApi, DailySummary, UserProfile, BodyMetric } from "@/lib/api/nutrition";
 
 function todayStr() {
@@ -25,7 +26,12 @@ export function useHome() {
       setProfile(p);
       setMetrics(m);
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Erreur de chargement");
+      const msg = e instanceof Error ? e.message : "Erreur de chargement";
+      if (msg === "Profile not found") {
+        router.replace("/onboarding");
+        return;
+      }
+      setError(msg);
     } finally {
       setLoading(false);
     }
