@@ -40,8 +40,8 @@ export default function RootLayout() {
             <Stack.Screen name="(auth)" />
             <Stack.Screen name="(tabs)" />
             <Stack.Screen name="onboarding" />
-            <Stack.Screen name="profile" />
-            <Stack.Screen name="paywall" options={{ presentation: "modal" }} />
+            <Stack.Screen name="profile/index" />
+            <Stack.Screen name="paywall/index" options={{ presentation: "modal" }} />
           </Stack>
         </View>
       </SafeAreaProvider>

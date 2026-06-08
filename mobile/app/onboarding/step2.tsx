@@ -24,7 +24,7 @@ const GOALS: GoalOption[] = [
   { value: "MAINTENANCE", label: "Maintien", emoji: "⚖️" },
 ];
 
-export function OnboardingStep2({ ctx }: { ctx: ReturnType<typeof useOnboarding> }) {
+export default function OnboardingStep2({ ctx }: { ctx: ReturnType<typeof useOnboarding> }) {
   const insets = useSafeAreaInsets();
 
   return (

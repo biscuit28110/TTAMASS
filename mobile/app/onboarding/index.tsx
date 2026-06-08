@@ -5,8 +5,8 @@ import { router } from "expo-router";
 import { useOnboarding } from "@/hooks/use-onboarding";
 import { StepProgress } from "@/components/ui/StepProgress";
 import { Colors, FontSize, Spacing } from "@/constants/theme";
-import { OnboardingStep2 } from "./step2";
-import { OnboardingStep3 } from "./step3";
+import OnboardingStep2 from "./step2";
+import OnboardingStep3 from "./step3";
 
 function GenderBtn({ label, value, selected, onPress }: { label: string; value: string; selected: boolean; onPress: () => void }) {
   return (

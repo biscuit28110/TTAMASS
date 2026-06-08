@@ -26,7 +26,7 @@ function MacroRow({
   );
 }
 
-export function OnboardingStep3({ ctx }: { ctx: ReturnType<typeof useOnboarding> }) {
+export default function OnboardingStep3({ ctx }: { ctx: ReturnType<typeof useOnboarding> }) {
   const insets = useSafeAreaInsets();
   const tdee = ctx.tdee as TdeePreview;
 
