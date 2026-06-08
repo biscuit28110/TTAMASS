@@ -6,7 +6,7 @@ import { calculateTdeeLocally } from "@/lib/utils/tdee";
 export type Step = 1 | 2 | 3;
 
 const DEFAULTS: OnboardingData = {
-  birthDate: "",
+  birthDate: `${new Date().getFullYear() - 25}-06-15`,
   gender: "MALE",
   heightCm: 175,
   weightKg: 75,
