@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef } from "react";
-import { Food, searchLocalFoods, searchOpenFoodFacts, cacheFood, logFoodEntry } from "@/lib/api/foods";
+import { Food, searchLocalFoods, logFoodEntry } from "@/lib/api/foods";
 import { MealType } from "@/hooks/use-nutrition";
 
 export function useFoodSearch(meal: MealType) {
@@ -19,20 +19,8 @@ export function useFoodSearch(meal: MealType) {
       setSearching(true);
       setError(null);
       try {
-        // Cherche d'abord en local — si ça échoue on tente quand même OFF
-        let local: Food[] = [];
-        try {
-          local = await searchLocalFoods(text);
-        } catch {
-          // DB vide ou erreur réseau : on continue avec le fallback OFF
-        }
-
-        if (local.length > 0) {
-          setResults(local);
-        } else {
-          const off = await searchOpenFoodFacts(text);
-          setResults(off);
-        }
+        const foods = await searchLocalFoods(text);
+        setResults(foods);
       } catch (e: unknown) {
         setError(e instanceof Error ? e.message : "Erreur de recherche");
       } finally {
@@ -45,31 +33,14 @@ export function useFoodSearch(meal: MealType) {
     setLogging(true);
     setError(null);
     try {
-      let foodId = food.id;
-
-      // Si l'aliment vient d'OFF (pas encore en DB), on le cache d'abord
-      if (!foodId) {
-        const cached = await cacheFood({
-          name: food.name,
-          brand: food.brand,
-          barcode: food.barcode,
-          caloriesPer100g: food.caloriesPer100g,
-          proteinPer100g: food.proteinPer100g,
-          carbsPer100g: food.carbsPer100g,
-          fatPer100g: food.fatPer100g,
-        });
-        foodId = cached.id;
-      }
-
       const d = new Date();
       const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       await logFoodEntry({
-        foodId,
+        foodId: food.id,
         mealType: meal,
         quantityG,
         date: dateStr,
       });
-
       return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors du log");

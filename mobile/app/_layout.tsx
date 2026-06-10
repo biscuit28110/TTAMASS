@@ -7,6 +7,8 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/stores/auth.store";
 import { setOnUnauthorized } from "@/lib/api/client";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+import "@/lib/logger"; // initialise les global handlers au démarrage
 
 function AuthGuard() {
   const { isAuthenticated, isLoading, restoreSession, signOut } = useAuthStore();
@@ -44,13 +46,15 @@ export default function RootLayout() {
         <AuthGuard />
         <View style={{ flex: 1 }}>
           <OfflineBanner />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A0A" } }}>
-            <Stack.Screen name="(auth)" />
-            <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="onboarding" />
-            <Stack.Screen name="profile/index" />
-            <Stack.Screen name="paywall/index" options={{ presentation: "modal" }} />
-          </Stack>
+          <ErrorBoundary>
+            <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: "#0A0A0A" } }}>
+              <Stack.Screen name="(auth)" />
+              <Stack.Screen name="(tabs)" />
+              <Stack.Screen name="onboarding" />
+              <Stack.Screen name="profile/index" />
+              <Stack.Screen name="paywall/index" options={{ presentation: "modal" }} />
+            </Stack>
+          </ErrorBoundary>
         </View>
       </SafeAreaProvider>
     </GestureHandlerRootView>

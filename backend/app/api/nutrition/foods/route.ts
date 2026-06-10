@@ -15,7 +15,36 @@ const createFoodSchema = z.object({
   fiberPer100g: z.number().nonnegative().max(100).optional(),
 });
 
-// Recherche dans le cache local — appelée par l'app avant Open Food Facts
+interface OFFProduct {
+  code: string;
+  product_name: string;
+  product_name_fr?: string;
+  brands?: string;
+  nutriments: {
+    "energy-kcal_100g"?: number;
+    proteins_100g?: number;
+    carbohydrates_100g?: number;
+    fat_100g?: number;
+    fiber_100g?: number;
+  };
+}
+
+async function searchOFF(query: string): Promise<OFFProduct[]> {
+  try {
+    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&lc=fr&cc=fr&sort_by=unique_scans_n&fields=code,product_name,product_name_fr,brands,nutriments`;
+    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const data = await res.json();
+    return (data.products ?? []).filter(
+      (p: OFFProduct) =>
+        (p.product_name_fr || p.product_name) &&
+        (p.nutriments?.["energy-kcal_100g"] ?? 0) > 0
+    );
+  } catch {
+    return [];
+  }
+}
+
+// Recherche locale + Open Food Facts fusionnée
 export async function GET(req: NextRequest) {
   const user = await getUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -28,17 +57,62 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Provide q or barcode param" }, { status: 400 });
   }
 
-  const foods = await prisma.food.findMany({
+  // Recherche locale sur name ET brand
+  const local = await prisma.food.findMany({
     where: barcode
       ? { barcode }
       : {
-          name: { contains: query!, mode: "insensitive" },
+          OR: [
+            { name: { contains: query!, mode: "insensitive" } },
+            { brand: { contains: query!, mode: "insensitive" } },
+          ],
         },
     take: 20,
     orderBy: { name: "asc" },
   });
 
-  return NextResponse.json(foods);
+  if (barcode || local.length >= 10) {
+    return NextResponse.json(local);
+  }
+
+  // Compléter avec OFF si résultats locaux insuffisants
+  const offProducts = await searchOFF(query!);
+
+  // Auto-cache les résultats OFF (upsert par barcode quand disponible)
+  const offFoods = await Promise.all(
+    offProducts.map(async (p) => {
+      const name = p.product_name_fr || p.product_name;
+      const foodData = {
+        name,
+        brand: p.brands?.split(",")[0].trim() || null,
+        caloriesPer100g: p.nutriments["energy-kcal_100g"] ?? 0,
+        proteinPer100g: p.nutriments.proteins_100g ?? 0,
+        carbsPer100g: p.nutriments.carbohydrates_100g ?? 0,
+        fatPer100g: p.nutriments.fat_100g ?? 0,
+        fiberPer100g: p.nutriments.fiber_100g ?? null,
+        source: FoodSource.OPEN_FOOD_FACTS,
+      };
+
+      if (p.code) {
+        return prisma.food.upsert({
+          where: { barcode: p.code },
+          update: {},
+          create: { ...foodData, barcode: p.code },
+        });
+      }
+
+      // Sans barcode : cherche si déjà en DB par nom exact, sinon crée
+      const existing = await prisma.food.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
+      if (existing) return existing;
+      return prisma.food.create({ data: foodData });
+    })
+  );
+
+  // Fusionner : local en premier, dédupliquer par id
+  const localIds = new Set(local.map((f) => f.id));
+  const merged = [...local, ...offFoods.filter((f) => !localIds.has(f.id))];
+
+  return NextResponse.json(merged.slice(0, 25));
 }
 
 // Crée un aliment custom ou cache un aliment Open Food Facts

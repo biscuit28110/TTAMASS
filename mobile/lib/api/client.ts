@@ -1,4 +1,5 @@
 import * as SecureStore from "expo-secure-store";
+import { logger } from "@/lib/logger";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
@@ -23,6 +24,9 @@ async function request<T>(
   options: RequestInit = {}
 ): Promise<T> {
   const token = await getToken();
+  const method = options.method ?? "GET";
+  const start = Date.now();
+
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
     headers: {
@@ -32,7 +36,10 @@ async function request<T>(
     },
   });
 
+  const ms = Date.now() - start;
+
   if (res.status === 401) {
+    logger.warn("net", `${method} ${path} → 401 (${ms}ms)`);
     await SecureStore.deleteItemAsync("access_token");
     _onUnauthorized?.();
     throw new ApiError("Session expirée, veuillez vous reconnecter", 401);
@@ -40,8 +47,11 @@ async function request<T>(
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Unknown error" }));
+    logger.error("net", `${method} ${path} → ${res.status} (${ms}ms)`, error);
     throw new ApiError(error.error ?? `HTTP ${res.status}`, res.status);
   }
+
+  logger.log("net", `${method} ${path} → ${res.status} (${ms}ms)`);
 
   if (res.status === 204) return undefined as T;
   return res.json();
