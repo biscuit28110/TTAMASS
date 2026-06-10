@@ -28,6 +28,20 @@ export interface OFFProduct {
   };
 }
 
+// Structure retournée par l'API search (/cgi/search.pl) — différente du lookup par barcode
+interface OFFSearchProduct {
+  code: string;
+  product_name: string;
+  brands: string;
+  nutriments: {
+    "energy-kcal_100g": number;
+    proteins_100g: number;
+    carbohydrates_100g: number;
+    fat_100g: number;
+    fiber_100g?: number;
+  };
+}
+
 // Recherche dans notre cache PostgreSQL
 export async function searchLocalFoods(query: string): Promise<Food[]> {
   return api.get<Food[]>(`/api/nutrition/foods?q=${encodeURIComponent(query)}`);
@@ -40,16 +54,16 @@ export async function searchOpenFoodFacts(query: string): Promise<Food[]> {
   );
   const data = await res.json();
   return (data.products ?? [])
-    .filter((p: OFFProduct) => p.product?.product_name && p.product?.nutriments?.["energy-kcal_100g"])
-    .map((p: OFFProduct) => ({
+    .filter((p: OFFSearchProduct) => p.product_name && p.nutriments?.["energy-kcal_100g"])
+    .map((p: OFFSearchProduct) => ({
       id: "",
-      name: p.product.product_name,
-      brand: p.product.brands || null,
+      name: p.product_name,
+      brand: p.brands || null,
       barcode: p.code,
-      caloriesPer100g: p.product.nutriments["energy-kcal_100g"] ?? 0,
-      proteinPer100g: p.product.nutriments.proteins_100g ?? 0,
-      carbsPer100g: p.product.nutriments.carbohydrates_100g ?? 0,
-      fatPer100g: p.product.nutriments.fat_100g ?? 0,
+      caloriesPer100g: p.nutriments["energy-kcal_100g"] ?? 0,
+      proteinPer100g: p.nutriments.proteins_100g ?? 0,
+      carbsPer100g: p.nutriments.carbohydrates_100g ?? 0,
+      fatPer100g: p.nutriments.fat_100g ?? 0,
       source: "OPEN_FOOD_FACTS",
     }));
 }

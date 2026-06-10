@@ -19,17 +19,22 @@ export function useFoodSearch(meal: MealType) {
       setSearching(true);
       setError(null);
       try {
-        // Cherche d'abord en local
-        const local = await searchLocalFoods(text);
+        // Cherche d'abord en local — si ça échoue on tente quand même OFF
+        let local: Food[] = [];
+        try {
+          local = await searchLocalFoods(text);
+        } catch {
+          // DB vide ou erreur réseau : on continue avec le fallback OFF
+        }
+
         if (local.length > 0) {
           setResults(local);
         } else {
-          // Fallback Open Food Facts
           const off = await searchOpenFoodFacts(text);
           setResults(off);
         }
-      } catch {
-        setError("Erreur de recherche");
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : "Erreur de recherche");
       } finally {
         setSearching(false);
       }
@@ -56,11 +61,13 @@ export function useFoodSearch(meal: MealType) {
         foodId = cached.id;
       }
 
+      const d = new Date();
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
       await logFoodEntry({
         foodId,
         mealType: meal,
         quantityG,
-        date: new Date().toISOString().split("T")[0],
+        date: dateStr,
       });
 
       return true;

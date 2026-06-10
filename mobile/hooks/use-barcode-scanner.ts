@@ -48,8 +48,8 @@ export function useBarcodeScanner(meal: MealType) {
         source: "OPEN_FOOD_FACTS",
       };
       setFound(food);
-    } catch {
-      setError("Erreur lors de la recherche du produit");
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur lors de la recherche du produit");
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,9 @@ export function useBarcodeScanner(meal: MealType) {
         });
         foodId = cached.id;
       }
-      await logFoodEntry({ foodId, mealType: meal, quantityG, date: new Date().toISOString().split("T")[0] });
+      const d = new Date();
+      const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      await logFoodEntry({ foodId, mealType: meal, quantityG, date: dateStr });
       return true;
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur lors du log");
