@@ -5,15 +5,23 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { useAuthStore } from "@/lib/stores/auth.store";
+import { setOnUnauthorized } from "@/lib/api/client";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 
 function AuthGuard() {
-  const { isAuthenticated, isLoading, restoreSession } = useAuthStore();
+  const { isAuthenticated, isLoading, restoreSession, signOut } = useAuthStore();
   const segments = useSegments();
 
   useEffect(() => {
     restoreSession();
-  }, []);
+  }, [restoreSession]);
+
+  // When any API call returns 401 (expired token), force logout
+  useEffect(() => {
+    setOnUnauthorized(() => {
+      signOut();
+    });
+  }, [signOut]);
 
   useEffect(() => {
     if (isLoading) return;

@@ -2,10 +2,35 @@ import { create } from "zustand";
 import * as SecureStore from "expo-secure-store";
 import { createClient } from "@supabase/supabase-js";
 
+// Supabase uses this adapter to persist its session (including refresh_token)
+// onAuthStateChange then keeps our "access_token" key in sync for the API client
+const ExpoSecureStoreAdapter = {
+  getItem: (key: string) => SecureStore.getItemAsync(key),
+  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
+  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
+};
+
 const supabase = createClient(
   process.env.EXPO_PUBLIC_SUPABASE_URL!,
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
+  {
+    auth: {
+      storage: ExpoSecureStoreAdapter,
+      autoRefreshToken: true,
+      persistSession: true,
+      detectSessionInUrl: false,
+    },
+  }
 );
+
+// Keep the "access_token" key up-to-date whenever Supabase refreshes silently
+supabase.auth.onAuthStateChange(async (_event, session) => {
+  if (session?.access_token) {
+    await SecureStore.setItemAsync("access_token", session.access_token);
+  } else {
+    await SecureStore.deleteItemAsync("access_token");
+  }
+});
 
 interface AuthState {
   userId: string | null;
@@ -25,7 +50,7 @@ export const useAuthStore = create<AuthState>((set) => ({
   signIn: async (email, password) => {
     const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) throw new Error(error.message);
-    await SecureStore.setItemAsync("access_token", data.session.access_token);
+    // onAuthStateChange handles SecureStore update
     set({ userId: data.user.id, isAuthenticated: true });
   },
 
@@ -33,21 +58,21 @@ export const useAuthStore = create<AuthState>((set) => ({
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw new Error(error.message);
     if (data.session) {
-      await SecureStore.setItemAsync("access_token", data.session.access_token);
       set({ userId: data.user?.id ?? null, isAuthenticated: true });
     }
   },
 
   signOut: async () => {
     await supabase.auth.signOut();
-    await SecureStore.deleteItemAsync("access_token");
+    // onAuthStateChange handles SecureStore cleanup
     set({ userId: null, isAuthenticated: false });
   },
 
   restoreSession: async () => {
+    // getSession() reads from persisted storage (SecureStore via adapter)
+    // Supabase auto-refreshes if the access_token is expired but refresh_token is valid
     const { data } = await supabase.auth.getSession();
     if (data.session) {
-      await SecureStore.setItemAsync("access_token", data.session.access_token);
       set({ userId: data.session.user.id, isAuthenticated: true });
     }
     set({ isLoading: false });

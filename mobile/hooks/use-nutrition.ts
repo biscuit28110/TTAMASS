@@ -22,7 +22,8 @@ export interface DailyData {
 }
 
 function todayStr() {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function useNutrition() {
@@ -44,7 +45,8 @@ export function useNutrition() {
   }, []);
 
   const deleteEntry = useCallback(async (id: string) => {
-    await api.delete(`/api/nutrition/food-entries/${id}`);
+    // Snapshot for rollback if the API call fails
+    const snapshot = data;
     setData((prev) => {
       if (!prev) return prev;
       const byMeal = { ...prev.byMeal } as Record<MealType, FoodEntry[]>;
@@ -63,7 +65,13 @@ export function useNutrition() {
         },
       };
     });
-  }, []);
+    try {
+      await api.delete(`/api/nutrition/food-entries/${id}`);
+    } catch (e: unknown) {
+      setData(snapshot);
+      setError(e instanceof Error ? e.message : "Erreur lors de la suppression");
+    }
+  }, [data]);
 
   return { data, loading, error, load, deleteEntry };
 }

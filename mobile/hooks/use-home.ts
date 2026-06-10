@@ -1,9 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { router } from "expo-router";
 import { nutritionApi, profileApi, bodyApi, DailySummary, UserProfile, BodyMetric } from "@/lib/api/nutrition";
+import { ApiError } from "@/lib/api/client";
 
 function todayStr() {
-  return new Date().toISOString().split("T")[0];
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
 export function useHome() {
@@ -26,12 +28,12 @@ export function useHome() {
       setProfile(p);
       setMetrics(m);
     } catch (e: unknown) {
-      const msg = e instanceof Error ? e.message : "Erreur de chargement";
-      if (msg === "Profile not found") {
+      // 404 on profile means the user hasn't completed onboarding yet
+      if (e instanceof ApiError && e.status === 404) {
         router.replace("/onboarding");
         return;
       }
-      setError(msg);
+      setError(e instanceof Error ? e.message : "Erreur de chargement");
     } finally {
       setLoading(false);
     }

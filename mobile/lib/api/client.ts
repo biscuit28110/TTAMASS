@@ -2,6 +2,18 @@ import * as SecureStore from "expo-secure-store";
 
 const BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? "http://localhost:3000";
 
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+let _onUnauthorized: (() => void) | null = null;
+export function setOnUnauthorized(cb: () => void) {
+  _onUnauthorized = cb;
+}
+
 async function getToken(): Promise<string | null> {
   return SecureStore.getItemAsync("access_token");
 }
@@ -20,9 +32,15 @@ async function request<T>(
     },
   });
 
+  if (res.status === 401) {
+    await SecureStore.deleteItemAsync("access_token");
+    _onUnauthorized?.();
+    throw new ApiError("Session expirée, veuillez vous reconnecter", 401);
+  }
+
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    throw new Error(error.error ?? `HTTP ${res.status}`);
+    throw new ApiError(error.error ?? `HTTP ${res.status}`, res.status);
   }
 
   if (res.status === 204) return undefined as T;

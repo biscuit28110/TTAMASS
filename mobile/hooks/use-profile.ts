@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { router } from "expo-router";
 import { profileApi, UserProfile } from "@/lib/api/nutrition";
 import { api } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/auth.store";
@@ -44,5 +45,10 @@ export function useProfile() {
     }
   }, [profile]);
 
-  return { profile, loading, saving, error, load, updateTargets, signOut };
+  const logout = useCallback(async () => {
+    await signOut();
+    router.replace("/(auth)/login");
+  }, [signOut]);
+
+  return { profile, loading, saving, error, load, updateTargets, signOut: logout };
 }

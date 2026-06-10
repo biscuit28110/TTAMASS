@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { BodyMetric, getMetrics, addMetric } from "@/lib/api/body";
 
 export type Period = "7j" | "30j" | "90j";
@@ -11,15 +11,19 @@ export function useBody() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
   const load = useCallback(async (p: Period = period) => {
+    // Cancel any in-flight request before starting a new one
+    abortRef.current?.abort();
+    abortRef.current = new AbortController();
     setLoading(true);
     setError(null);
     try {
       const data = await getMetrics(PERIOD_LIMIT[p]);
-      // Tri chronologique pour le graphique
       setMetrics([...data].reverse());
     } catch (e: unknown) {
+      if (e instanceof Error && e.name === "AbortError") return;
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     } finally {
       setLoading(false);
