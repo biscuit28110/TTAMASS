@@ -9,9 +9,10 @@ import { setOnUnauthorized } from "@/lib/api/client";
 import { OfflineBanner } from "@/components/ui/OfflineBanner";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import "@/lib/logger"; // initialise les global handlers au démarrage
+import { initRevenueCat } from "@/hooks/use-premium";
 
 function AuthGuard() {
-  const { isAuthenticated, isLoading, restoreSession, signOut } = useAuthStore();
+  const { userId, isAuthenticated, isLoading, restoreSession, signOut } = useAuthStore();
   const segments = useSegments();
 
   useEffect(() => {
@@ -24,6 +25,12 @@ function AuthGuard() {
       signOut();
     });
   }, [signOut]);
+
+  useEffect(() => {
+    if (isAuthenticated && userId) {
+      initRevenueCat(userId);
+    }
+  }, [isAuthenticated, userId]);
 
   useEffect(() => {
     if (isLoading) return;
