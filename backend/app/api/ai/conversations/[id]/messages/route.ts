@@ -3,6 +3,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth/get-user";
 import { checkDailyLimit, buildSystemPrompt, streamCoachReply } from "@/lib/services/ai";
+import { isAdmin } from "@/lib/admin";
 
 const sendSchema = z.object({
   content: z.string().min(1).max(2000),
@@ -56,7 +57,7 @@ export async function POST(
       where: { userId: user.id },
       select: { plan: true },
     });
-    const isPremium = profile?.plan === "PREMIUM";
+    const isPremium = profile?.plan === "PREMIUM" || isAdmin(user.email);
     const withinLimit = await checkDailyLimit(user.id, isPremium);
 
     if (!withinLimit) {

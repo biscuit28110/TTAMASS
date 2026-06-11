@@ -3,6 +3,7 @@ import { z } from "zod";
 import { BodyPhotoType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth/get-user";
+import { isAdmin } from "@/lib/admin";
 
 const createSchema = z.object({
   url: z.string().url(),
@@ -21,7 +22,7 @@ export async function GET(req: NextRequest) {
     select: { plan: true },
   });
 
-  if (profile?.plan === "FREE") {
+  if (profile?.plan === "FREE" && !isAdmin(user.email)) {
     return NextResponse.json({ error: "Photos require Premium" }, { status: 403 });
   }
 
@@ -42,7 +43,7 @@ export async function POST(req: NextRequest) {
     select: { plan: true },
   });
 
-  if (profile?.plan === "FREE") {
+  if (profile?.plan === "FREE" && !isAdmin(user.email)) {
     return NextResponse.json({ error: "Photos require Premium" }, { status: 403 });
   }
 
