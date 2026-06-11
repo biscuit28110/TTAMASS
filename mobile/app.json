@@ -9,12 +9,14 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "fr.ttamass.app",
+      "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
       "package": "fr.ttamass.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#0A0A0A",
         "foregroundImage": "./assets/android-icon-foreground.png",
@@ -28,7 +30,14 @@
     },
     "plugins": [
       "expo-router",
-      "expo-secure-store"
+      "expo-secure-store",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "TTAMASS utilise tes photos pour analyser ton repas.",
+          "cameraPermission": "TTAMASS utilise l'appareil photo pour analyser ton repas."
+        }
+      ]
     ],
     "scheme": "ttamass",
     "extra": {
