@@ -48,17 +48,22 @@ export async function POST(req: NextRequest) {
 
   const macros = calculateMacros(food, quantityG);
 
-  const entry = await prisma.foodEntry.create({
-    data: {
-      userId: user.id,
-      foodId,
-      mealType,
-      quantityG,
-      date: new Date(`${date}T12:00:00.000Z`),
-      ...macros,
-    },
-    include: { food: true },
-  });
+  try {
+    const entry = await prisma.foodEntry.create({
+      data: {
+        userId: user.id,
+        foodId,
+        mealType,
+        quantityG,
+        date: new Date(`${date}T12:00:00.000Z`),
+        ...macros,
+      },
+      include: { food: true },
+    });
 
-  return NextResponse.json(entry, { status: 201 });
+    return NextResponse.json(entry, { status: 201 });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : "Database error";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
 }
