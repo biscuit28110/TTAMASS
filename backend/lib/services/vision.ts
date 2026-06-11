@@ -1,7 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
+import { groq } from "@/lib/groq";
 import { DetectedFood, VisionAnalysisResult } from "@/types/vision";
-
-const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const VISION_PROMPT = `Analyse cette photo d'assiette et identifie tous les aliments visibles.
 
@@ -36,19 +34,17 @@ export async function analyzeImage(
   imageBase64: string,
   mediaType: "image/jpeg" | "image/png" | "image/webp"
 ): Promise<VisionAnalysisResult> {
-  const response = await client.messages.create({
-    model: "claude-haiku-4-5-20251001",
+  const response = await groq.chat.completions.create({
+    model: "llama-3.2-11b-vision-preview",
     max_tokens: 1024,
     messages: [
       {
         role: "user",
         content: [
           {
-            type: "image",
-            source: {
-              type: "base64",
-              media_type: mediaType,
-              data: imageBase64,
+            type: "image_url",
+            image_url: {
+              url: `data:${mediaType};base64,${imageBase64}`,
             },
           },
           {
@@ -60,13 +56,13 @@ export async function analyzeImage(
     ],
   });
 
-  const rawText = response.content[0].type === "text" ? response.content[0].text : "";
-  const inputTokens = response.usage.input_tokens;
-  const outputTokens = response.usage.output_tokens;
+  const rawText = response.choices[0]?.message?.content ?? "";
+  const inputTokens = response.usage?.prompt_tokens ?? 0;
+  const outputTokens = response.usage?.completion_tokens ?? 0;
 
   const jsonMatch = rawText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error("Claude n'a pas retourné un JSON valide");
+    throw new Error("Llama Vision n'a pas retourné un JSON valide");
   }
 
   const parsed = JSON.parse(jsonMatch[0]) as {
