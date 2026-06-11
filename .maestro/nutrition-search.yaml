@@ -1,0 +1,115 @@
+appId: fr.ttamass.app
+---
+# ─────────────────────────────────────────
+# Chemin nominal — recherche et ajout d'un aliment
+# ─────────────────────────────────────────
+- launchApp
+- waitForAnimationToEnd
+
+# Arriver sur l'onglet Nutrition (utilisateur déjà connecté)
+- tapOn: "Nutrition"
+- waitForAnimationToEnd
+- takeScreenshot: "01-nutrition-tab"
+- assertNotVisible: "Une erreur est survenue"
+- assertVisible: "Nutrition"
+
+# Ouvrir la recherche depuis le repas Déjeuner
+- tapOn: "Déjeuner"
+- waitForAnimationToEnd
+- takeScreenshot: "02-meal-section-expanded"
+- assertNotVisible: "Une erreur est survenue"
+
+# Taper sur le bouton "+" du repas pour ouvrir la recherche
+- tapOn:
+    text: "+"
+- waitForAnimationToEnd
+- takeScreenshot: "03-search-screen"
+- assertNotVisible: "Une erreur est survenue"
+- assertVisible: "Rechercher un aliment..."
+
+# Vérifier le hint "2 caractères minimum"
+- assertVisible: "Tape au moins 2 caractères"
+
+# Saisir une requête valide
+- tapOn: "Rechercher un aliment..."
+- inputText: "poulet"
+- waitForAnimationToEnd
+- takeScreenshot: "04-search-results"
+- assertNotVisible: "Une erreur est survenue"
+
+# Vérifier qu'au moins un résultat contenant "poulet" est visible
+- assertVisible: "poulet"
+
+# Sélectionner le premier résultat
+- tapOn:
+    index: 0
+    text: "poulet"
+- waitForAnimationToEnd
+- takeScreenshot: "05-quantity-sheet"
+- assertNotVisible: "Une erreur est survenue"
+
+# La bottom sheet affiche le bouton de confirmation
+- assertVisible: "Ajouter à mon repas"
+
+# Modifier la quantité (valeur par défaut : 100g)
+- tapOn: "100"
+- clearText
+- inputText: "150"
+- takeScreenshot: "06-quantity-150g"
+
+# Confirmer l'ajout
+- tapOn: "Ajouter à mon repas"
+- waitForAnimationToEnd
+- takeScreenshot: "07-back-to-nutrition"
+- assertNotVisible: "Une erreur est survenue"
+
+# On est revenu sur l'écran Nutrition
+- assertVisible: "Nutrition"
+
+# ─────────────────────────────────────────
+# Cas d'erreur 1 — requête trop courte (< 2 caractères)
+# ─────────────────────────────────────────
+- tapOn:
+    text: "+"
+- waitForAnimationToEnd
+- tapOn: "Rechercher un aliment..."
+- inputText: "p"
+- takeScreenshot: "08-query-too-short"
+- assertVisible: "Tape au moins 2 caractères"
+- assertNotVisible: "Une erreur est survenue"
+
+# ─────────────────────────────────────────
+# Cas d'erreur 2 — requête sans résultats
+# ─────────────────────────────────────────
+- clearText
+- inputText: "xkzqwerty999"
+- waitForAnimationToEnd
+- takeScreenshot: "09-no-results"
+- assertVisible: "Aucun résultat pour"
+- assertNotVisible: "Une erreur est survenue"
+
+# ─────────────────────────────────────────
+# Cas d'erreur 3 — quantité invalide (0 g)
+# ─────────────────────────────────────────
+- clearText
+- inputText: "poulet"
+- waitForAnimationToEnd
+- tapOn:
+    index: 0
+    text: "poulet"
+- waitForAnimationToEnd
+- tapOn: "100"
+- clearText
+- inputText: "0"
+- takeScreenshot: "10-invalid-quantity"
+# Le bouton doit être désactivé (opacity 0.6) — on vérifie qu'un tap ne déclenche pas de log
+- tapOn: "Ajouter à mon repas"
+- assertNotVisible: "Une erreur est survenue"
+- takeScreenshot: "11-invalid-quantity-no-action"
+
+# Fermer la bottom sheet
+- tapOn:
+    point: "50%,20%"
+- waitForAnimationToEnd
+- takeScreenshot: "12-final"
+- assertNotVisible: "Une erreur est survenue"
