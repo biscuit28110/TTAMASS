@@ -1,8 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Anthropic from "@anthropic-ai/sdk";
 import { DetectedFood, VisionAnalysisResult } from "@/types/vision";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY ?? "");
-const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
 const VISION_PROMPT = `Analyse cette photo d'assiette et identifie tous les aliments visibles.
 
@@ -37,24 +36,37 @@ export async function analyzeImage(
   imageBase64: string,
   mediaType: "image/jpeg" | "image/png" | "image/webp"
 ): Promise<VisionAnalysisResult> {
-  const result = await model.generateContent([
-    {
-      inlineData: {
-        data: imageBase64,
-        mimeType: mediaType,
+  const response = await client.messages.create({
+    model: "claude-haiku-4-5-20251001",
+    max_tokens: 1024,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image",
+            source: {
+              type: "base64",
+              media_type: mediaType,
+              data: imageBase64,
+            },
+          },
+          {
+            type: "text",
+            text: VISION_PROMPT,
+          },
+        ],
       },
-    },
-    VISION_PROMPT,
-  ]);
+    ],
+  });
 
-  const rawText = result.response.text();
-  const usageMetadata = result.response.usageMetadata;
-  const inputTokens = usageMetadata?.promptTokenCount ?? 0;
-  const outputTokens = usageMetadata?.candidatesTokenCount ?? 0;
+  const rawText = response.content[0].type === "text" ? response.content[0].text : "";
+  const inputTokens = response.usage.input_tokens;
+  const outputTokens = response.usage.output_tokens;
 
   const jsonMatch = rawText.match(/\{[\s\S]*\}/);
   if (!jsonMatch) {
-    throw new Error("Gemini n'a pas retourné un JSON valide");
+    throw new Error("Claude n'a pas retourné un JSON valide");
   }
 
   const parsed = JSON.parse(jsonMatch[0]) as {
