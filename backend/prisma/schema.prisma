@@ -113,7 +113,7 @@ model Food {
 
   // Aliment custom créé par un utilisateur
   createdByUserId String?
-  createdBy       UserProfile? @relation("CustomFoods", fields: [createdByUserId], references: [id])
+  createdBy       UserProfile? @relation("CustomFoods", fields: [createdByUserId], references: [userId])
 
   foodEntries FoodEntry[]
 
@@ -137,7 +137,7 @@ model FoodEntry {
   createdAt DateTime @default(now())
 
   userId    String
-  user      UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   date      DateTime // date du jour (sans heure pour grouper par journée)
   mealType  MealType
@@ -174,7 +174,7 @@ model BodyMetric {
   createdAt DateTime @default(now())
 
   userId String
-  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   date DateTime // date de la mesure
 
@@ -199,7 +199,7 @@ model BodyPhoto {
   createdAt DateTime @default(now())
 
   userId String
-  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   date    DateTime
   url     String        // URL Supabase Storage ou Cloudflare R2
@@ -231,7 +231,7 @@ model Exercise {
 
   // Si exercice custom, lié à l'utilisateur qui l'a créé
   createdByUserId String?
-  createdBy       UserProfile? @relation("CustomExercises", fields: [createdByUserId], references: [id])
+  createdBy       UserProfile? @relation("CustomExercises", fields: [createdByUserId], references: [userId])
 
   workoutSets WorkoutSet[]
 
@@ -261,7 +261,7 @@ model WorkoutSession {
   updatedAt DateTime @updatedAt
 
   userId String
-  user   UserProfile @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user   UserProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
 
   date     DateTime
   name     String?  // ex: "Push A", "Legs"
