@@ -1,81 +1,129 @@
 # Skill : check-logs
 
-Lit les logs Expo en temps réel et fait le diagnostic des erreurs de l'app TTAMASS.
+Diagnostique les erreurs de l'app TTAMASS : backend (Coolify) + frontend (Expo Go).
 
 ## Arguments attendus
-`/check-logs` — pas d'argument, analyse les logs du serveur Expo actif
+`/check-logs` — analyse backend + frontend (si Expo actif)
 
 Options facultatives :
-- `/check-logs errors` — affiche uniquement les erreurs (pas les warnings ni les logs réseau)
-- `/check-logs net` — affiche uniquement les requêtes réseau (toutes, pas seulement les erreurs)
+- `/check-logs errors` — affiche uniquement les erreurs (pas warnings ni réseau OK)
+- `/check-logs net` — affiche uniquement les requêtes réseau
+
+---
+
+## Prérequis : démarrer Expo avec capture de logs
+
+Pour que le skill puisse lire les logs frontend, Expo doit être démarré avec cette commande
+(et non `expo start` seul) :
+
+```bash
+npx expo start --tunnel 2>&1 | tee ~/.claude/jobs/$(ls -t ~/.claude/jobs/ | grep -v pins | head -1)/tmp/expo.log
+```
+
+Si l'app est déjà lancée sans capture → arrête et relance avec la commande ci-dessus.
+
+---
 
 ## Ce que tu dois faire
 
-### 1. Trouver le fichier de logs
-Cherche le fichier expo.log actif :
+### 1. Logs backend (Coolify — toujours)
+
+Appelle `mcp__coolify__application_logs` :
+- `uuid` : `lmk45wt769p50qkwzajt8pzz`
+- `lines` : `200`
+
+### 2. Logs frontend (Expo Go — si disponible)
+
+Cherche le fichier expo.log :
 ```bash
 find /home/codespace/.claude/jobs/*/tmp/ -name "expo.log" 2>/dev/null | head -1
 ```
 
-Si aucun fichier trouvé → affiche :
-```
-Aucun serveur Expo actif détecté.
-Lance l'app avec : npx expo start --tunnel
-```
+- **Trouvé** → lis les **300 dernières lignes** et analyse
+- **Non trouvé** → affiche la commande de démarrage (voir Prérequis) et passe au backend uniquement
 
-### 2. Analyser les logs
+### 3. Analyser les logs frontend
 
-Lis les **200 dernières lignes** du fichier et catégorise :
+Parse les lignes dans cet ordre de priorité :
 
-**Erreurs critiques** — lignes contenant `[TTAMASS][*] ERROR:` ou `[TTAMASS][global]` :
-- Affiche : screen, message, données associées
-- Indique si c'est un crash React (ErrorBoundary) ou une erreur native (global handler)
+**🔴 Crashes fatals** — patterns :
+- `[TTAMASS][ErrorBoundary]` → crash React (composant crashé)
+- `[TTAMASS][global] ERROR:` avec `isFatal: true` → crash complet de l'app
+- `Invariant Violation` → module natif manquant ou bug React Native
+- `TypeError` / `ReferenceError` → erreur JS non catchée
 
-**Warnings** — lignes contenant `[TTAMASS][*] WARN:` :
-- Affiche les requêtes 4xx (401, 403, 404)
-- Indique l'endpoint concerné et le temps de réponse
+**🟠 Erreurs récupérables** — patterns :
+- `[TTAMASS][global] ERROR:` avec `isFatal: false` → erreur rattrapée
+- `[TTAMASS][global] Unhandled promise` → promesse rejetée sans catch
+- `[TTAMASS][net] ERROR:` → requête réseau échouée (4xx/5xx sauf 401)
 
-**Requêtes réseau échouées** — lignes contenant `→ 5` (5xx) :
-- Affiche endpoint, status code, temps de réponse, et les données d'erreur si présentes
+**🟡 Warnings** — patterns :
+- `[TTAMASS][net] WARN:` → requête 401 (token expiré)
+- `ERROR  Warning:` → warning React (prop manquante, key dupliquée, etc.)
 
-**Requêtes lentes** — requêtes `→ 200` avec temps > 2000ms :
-- Signale les endpoints lents pour optimisation
+**🐌 Requêtes lentes** — patterns :
+- `[TTAMASS][net] LOG:` avec temps > 2000ms → endpoint lent
 
-### 3. Format du rapport
+### 4. Format du rapport
 
 ```
 ## Rapport logs TTAMASS — [heure]
 
-### 🔴 Erreurs (X)
+### 🖥️ Backend (Coolify — ttamass.tta-dev.fr)
+
+🔴 Erreurs (X) :
+- [vision] analyzeImage — 429 Too Many Requests (Gemini quota)
+
+🟡 Warnings (X) :
+- GET /api/auth/profile → 401
+
+✅ Aucune erreur backend. / [rapport si erreurs]
+
+---
+
+### 📱 Frontend (Expo Go)
+
+🔴 Crashes (X) :
 - [ErrorBoundary] Cannot read property 'id' of undefined
-  → Stack: app/(tabs)/nutrition.tsx:42
-  
-### 🟡 Warnings (X)  
-- [net] GET /api/auth/profile → 401 (234ms) — token expiré
-  
-### 🔴 Requêtes échouées (X)
+  → Stack: NutritionScreen > FoodCard (app/(tabs)/nutrition.tsx:42)
+
+🟠 Erreurs récupérables (X) :
+- [global] Unhandled promise: Network request failed
 - [net] POST /api/nutrition/food-entries → 500 (1204ms)
   → { error: "Foreign key constraint failed" }
 
-### 🐌 Requêtes lentes (X)
-- GET /api/nutrition/foods?q=poulet → 200 (3420ms)
+🟡 Warnings (X) :
+- [net] GET /api/auth/profile → 401 (234ms)
+- React Warning: Each child in a list should have a unique "key" prop
 
-### ✅ Résumé
-- X requêtes réussies en moyenne Xms
-- Dernière activité : il y a X secondes
+🐌 Requêtes lentes (X) :
+- [net] GET /api/nutrition/foods?q=poulet → 200 (3420ms)
+
+✅ Résumé : X erreurs · X warnings · dernière activité il y a Xs
 ```
 
-Si aucune erreur → affiche `✅ Aucune erreur détectée dans les logs récents.`
+Si aucun log frontend → affiche la commande de démarrage Expo.
 
-### 4. Proposition d'action
-Si des erreurs sont trouvées, propose directement le diagnostic :
-- Erreur 401 répétée → "Token expiré ou non chargé, vérifie SecureStore"
-- Erreur 500 backend → "Regarde les logs Coolify pour le détail serveur"
-- ErrorBoundary → "Lis le stack trace ci-dessus pour localiser le composant fautif"
-- Requête lente → "Considère un index sur ce champ ou un cache côté backend"
+### 5. Diagnostics automatiques
+
+Si des erreurs sont trouvées, propose le bon diagnostic :
+
+| Erreur | Diagnostic |
+|--------|-----------|
+| `Invariant Violation: Requiring unknown module` | Module natif incompatible avec Expo Go → utiliser expo-dev-client ou retirer le module |
+| `[ErrorBoundary]` répété sur un écran | Lire le stack ci-dessus pour localiser le composant exact |
+| `[global] isFatal: true` | L'app a crashé — corriger et relancer Expo Go |
+| `[global] Unhandled promise` réseau | Vérifier `EXPO_PUBLIC_API_URL` dans `mobile/.env` |
+| 401 répétés | Token Supabase expiré — vérifier SecureStore ou la session |
+| 500 backend | Lire les logs Coolify ci-dessus pour le détail serveur |
+| Requête > 2000ms | Ajouter un index sur le champ filtré ou un cache côté backend |
+
+---
 
 ## Règles
-- Toujours lire les 200 dernières lignes minimum (les erreurs récentes sont en bas)
-- Ne pas afficher les lignes de bundling Metro (▓░, Bundled, modules) — trop verbeux
-- Trier par criticité : erreurs > warnings > requêtes lentes
-- Si l'app n'est pas connectée (aucun log `[TTAMASS]`), le signaler explicitement
+- **Coolify en priorité** — toujours récupérer le backend même sans Expo actif
+- Lire les 300 dernières lignes d'expo.log (les erreurs récentes sont en bas)
+- Ne pas afficher les lignes Metro/bundler (`▓░`, `Bundled`, `modules`, `npm warn`) — trop verbeux
+- Ne pas afficher les requêtes réseau réussies < 2000ms sauf si option `net`
+- Trier par criticité : crashes > erreurs > warnings > lenteur
+- L'UUID Coolify de l'app TTAMASS est `lmk45wt769p50qkwzajt8pzz`
