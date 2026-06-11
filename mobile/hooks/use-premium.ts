@@ -1,12 +1,40 @@
 import { useState, useCallback } from "react";
 import { Alert, Platform } from "react-native";
-import Purchases, { LOG_LEVEL } from "react-native-purchases";
+import Constants from "expo-constants";
 import { api } from "@/lib/api/client";
+
+const IS_EXPO_GO = Constants.appOwnership === "expo";
+
+// Module natif indisponible dans Expo Go — stub silencieux
+const stub = {
+  setLogLevel: () => {},
+  configure: () => {},
+  logIn: async () => {},
+  getOfferings: async () => ({ current: null }),
+  purchasePackage: async () => {
+    throw new Error("Achats non disponibles dans Expo Go");
+  },
+  restorePurchases: async () => ({ entitlements: { active: {} } }),
+};
+
+const getRC = () => {
+  if (IS_EXPO_GO) return { Purchases: stub, LOG_LEVEL: {} as Record<string, unknown> };
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const rcp = require("react-native-purchases");
+    return { Purchases: rcp.default, LOG_LEVEL: rcp.LOG_LEVEL };
+  } catch {
+    return { Purchases: stub, LOG_LEVEL: {} as Record<string, unknown> };
+  }
+};
+
+const { Purchases, LOG_LEVEL } = getRC();
 
 const RC_API_KEY_IOS = process.env.EXPO_PUBLIC_RC_API_KEY_IOS ?? "";
 const RC_API_KEY_ANDROID = process.env.EXPO_PUBLIC_RC_API_KEY_ANDROID ?? "";
 
 export function initRevenueCat(userId: string) {
+  if (IS_EXPO_GO) return;
   const apiKey = Platform.OS === "ios" ? RC_API_KEY_IOS : RC_API_KEY_ANDROID;
   if (!apiKey) return;
   Purchases.setLogLevel(LOG_LEVEL.ERROR);
