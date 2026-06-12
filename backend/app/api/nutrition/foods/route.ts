@@ -36,7 +36,7 @@ interface OFFProduct {
   code: string;
   product_name: string;
   product_name_fr?: string;
-  brands?: string;
+  brands?: string | string[];
   nutriments: {
     "energy-kcal_100g"?: number;
     proteins_100g?: number;
@@ -165,7 +165,7 @@ export async function GET(req: NextRequest) {
       const name = p.product_name_fr || p.product_name;
       const foodData = {
         name,
-        brand: p.brands?.split(",")[0].trim() || null,
+        brand: (Array.isArray(p.brands) ? p.brands[0] : p.brands?.split(",")[0])?.trim() || null,
         caloriesPer100g: p.nutriments["energy-kcal_100g"] ?? 0,
         proteinPer100g: p.nutriments.proteins_100g ?? 0,
         carbsPer100g: p.nutriments.carbohydrates_100g ?? 0,
