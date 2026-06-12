@@ -53,7 +53,7 @@ async function searchOFF(query: string): Promise<OFFProduct[]> {
     return (data.hits ?? []).filter(
       (p: OFFProduct) =>
         (p.product_name_fr || p.product_name) &&
-        (p.nutriments?.["energy-kcal_100g"] ?? 0) > 0
+        p.nutriments != null
     );
   } catch {
     return [];
@@ -76,7 +76,7 @@ async function searchUSDA(query: string): Promise<UsdaFood[]> {
     });
     const data = await res.json();
     return (data.foods ?? []).filter((f: UsdaFood) =>
-      f.foodNutrients?.some((n) => n.nutrientId === 1008 && n.value > 0)
+      f.description && Array.isArray(f.foodNutrients)
     );
   } catch {
     return [];
