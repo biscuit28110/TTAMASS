@@ -95,7 +95,7 @@ export default function FoodSearchScreen() {
               <Text style={{ color: Colors.textSecondary, fontSize: FontSize.sm, fontWeight: "700" }}>{Math.round(item.caloriesPer100g)} kcal</Text>
             </View>
             <Text style={{ color: Colors.textMuted, fontSize: 10, marginTop: 4 }}>
-              P:{item.proteinPer100g}g · G:{item.carbsPer100g}g · L:{item.fatPer100g}g · pour 100g
+              P:{item.proteinPer100g}g · G:{item.carbsPer100g}g · L:{item.fatPer100g}g · pour 100{item.unit === "ML" ? " ml" : "g"}
             </Text>
           </TouchableOpacity>
         )}

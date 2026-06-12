@@ -11,7 +11,7 @@ export interface FoodEntry {
   proteinG: number;
   carbsG: number;
   fatG: number;
-  food: { id: string; name: string; brand: string | null; caloriesPer100g: number };
+  food: { id: string; name: string; brand: string | null; caloriesPer100g: number; unit: "G" | "ML" };
 }
 
 export interface DailyData {

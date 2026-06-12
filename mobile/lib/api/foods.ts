@@ -11,6 +11,8 @@ export interface Food {
   carbsPer100g: number;
   fatPer100g: number;
   source: string;
+  unit: "G" | "ML";
+  defaultQuantity: number;
 }
 
 export interface OFFProduct {

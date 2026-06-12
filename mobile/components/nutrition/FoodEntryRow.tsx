@@ -36,7 +36,12 @@ export function FoodEntryRow({ entry, onDelete }: Props) {
           <Text style={{ color: Colors.textPrimary, fontSize: FontSize.sm, fontWeight: "600" }} numberOfLines={1}>{entry.food.name}</Text>
           {entry.food.brand && <Text style={{ color: Colors.textMuted, fontSize: 11 }}>{entry.food.brand}</Text>}
           <Text style={{ color: Colors.textMuted, fontSize: 11, marginTop: 2 }}>
-            {entry.quantityG}g · P:{Math.round(entry.proteinG)}g G:{Math.round(entry.carbsG)}g L:{Math.round(entry.fatG)}g
+            {entry.food.unit === "ML"
+              ? entry.quantityG >= 1000
+                ? `${(entry.quantityG / 1000).toFixed(1).replace(".", ",")} L`
+                : `${entry.quantityG} ml`
+              : `${entry.quantityG} g`
+            } · P:{Math.round(entry.proteinG)}g G:{Math.round(entry.carbsG)}g L:{Math.round(entry.fatG)}g
           </Text>
         </View>
         <Text style={{ color: Colors.textPrimary, fontWeight: "700", fontSize: FontSize.sm }}>{Math.round(entry.calories)} kcal</Text>
