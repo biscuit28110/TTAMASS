@@ -29,12 +29,28 @@ interface OFFProduct {
   };
 }
 
+interface UsdaFood {
+  fdcId: number;
+  description: string;
+  brandOwner?: string;
+  gtinUpc?: string;
+  foodNutrients: Array<{ nutrientId: number; value: number }>;
+}
+
+// OFF v2 : Elasticsearch-based, pertinence réelle, fr + en
 async function searchOFF(query: string): Promise<OFFProduct[]> {
   try {
-    const url = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(query)}&search_simple=1&action=process&json=1&page_size=20&lc=fr&cc=fr&sort_by=unique_scans_n&fields=code,product_name,product_name_fr,brands,nutriments`;
-    const res = await fetch(url, { signal: AbortSignal.timeout(5000) });
+    const params = new URLSearchParams({
+      q: query,
+      langs: "fr,en",
+      page_size: "25",
+      fields: "code,product_name,product_name_fr,brands,nutriments",
+    });
+    const res = await fetch(`https://search.openfoodfacts.org/search?${params}`, {
+      signal: AbortSignal.timeout(5000),
+    });
     const data = await res.json();
-    return (data.products ?? []).filter(
+    return (data.hits ?? []).filter(
       (p: OFFProduct) =>
         (p.product_name_fr || p.product_name) &&
         (p.nutriments?.["energy-kcal_100g"] ?? 0) > 0
@@ -44,7 +60,45 @@ async function searchOFF(query: string): Promise<OFFProduct[]> {
   }
 }
 
-// Recherche locale + Open Food Facts fusionnée
+// USDA FDC : aliments bruts et génériques (poulet, riz, œuf…)
+// Foundation + SR Legacy = données per 100g, qualité nutritionnelle de référence
+async function searchUSDA(query: string): Promise<UsdaFood[]> {
+  const apiKey = process.env.USDA_API_KEY ?? "DEMO_KEY";
+  try {
+    const params = new URLSearchParams({
+      query,
+      api_key: apiKey,
+      pageSize: "15",
+      dataType: "Foundation,SR Legacy",
+    });
+    const res = await fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?${params}`, {
+      signal: AbortSignal.timeout(5000),
+    });
+    const data = await res.json();
+    return (data.foods ?? []).filter((f: UsdaFood) =>
+      f.foodNutrients?.some((n) => n.nutrientId === 1008 && n.value > 0)
+    );
+  } catch {
+    return [];
+  }
+}
+
+function mapUsdaProduct(f: UsdaFood) {
+  const get = (id: number) => f.foodNutrients.find((n) => n.nutrientId === id)?.value ?? 0;
+  const raw = f.description;
+  return {
+    name: raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase(),
+    brand: f.brandOwner?.trim() || null,
+    barcode: f.gtinUpc || null,
+    caloriesPer100g: get(1008),
+    proteinPer100g: get(1003),
+    carbsPer100g: get(1005),
+    fatPer100g: get(1004),
+    fiberPer100g: get(1079) || null,
+    source: FoodSource.OPEN_FOOD_FACTS,
+  };
+}
+
 export async function GET(req: NextRequest) {
   const user = await getUser(req);
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -57,28 +111,36 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Provide q or barcode param" }, { status: 400 });
   }
 
-  // Recherche locale sur name ET brand
-  const local = await prisma.food.findMany({
-    where: barcode
-      ? { barcode }
-      : {
-          OR: [
-            { name: { contains: query!, mode: "insensitive" } },
-            { brand: { contains: query!, mode: "insensitive" } },
-          ],
-        },
-    take: 20,
-    orderBy: { name: "asc" },
-  });
-
-  if (barcode || local.length >= 10) {
+  if (barcode) {
+    const local = await prisma.food.findMany({ where: { barcode }, take: 20 });
     return NextResponse.json(local);
   }
 
-  // Compléter avec OFF si résultats locaux insuffisants
-  const offProducts = await searchOFF(query!);
+  // Ranking local : exact match > startsWith > contains (pertinence décroissante)
+  const [exact, startsWith, contains] = await Promise.all([
+    prisma.food.findMany({ where: { name: { equals: query!, mode: "insensitive" } }, take: 5 }),
+    prisma.food.findMany({ where: { name: { startsWith: query!, mode: "insensitive" } }, take: 10 }),
+    prisma.food.findMany({
+      where: { OR: [{ name: { contains: query!, mode: "insensitive" } }, { brand: { contains: query!, mode: "insensitive" } }] },
+      take: 20,
+    }),
+  ]);
 
-  // Auto-cache les résultats OFF (upsert par barcode quand disponible)
+  const seenLocal = new Set<string>();
+  const local: typeof exact = [];
+  for (const f of [...exact, ...startsWith, ...contains]) {
+    if (!seenLocal.has(f.id)) { seenLocal.add(f.id); local.push(f); }
+  }
+
+  if (local.length >= 10) return NextResponse.json(local.slice(0, 25));
+
+  // OFF v2 + USDA en parallèle
+  const [offProducts, usdaProducts] = await Promise.all([
+    searchOFF(query!),
+    searchUSDA(query!),
+  ]);
+
+  // Cache OFF
   const offFoods = await Promise.all(
     offProducts.map(async (p) => {
       const name = p.product_name_fr || p.product_name;
@@ -92,25 +154,37 @@ export async function GET(req: NextRequest) {
         fiberPer100g: p.nutriments.fiber_100g ?? null,
         source: FoodSource.OPEN_FOOD_FACTS,
       };
-
       if (p.code) {
-        return prisma.food.upsert({
-          where: { barcode: p.code },
-          update: {},
-          create: { ...foodData, barcode: p.code },
-        });
+        return prisma.food.upsert({ where: { barcode: p.code }, update: {}, create: { ...foodData, barcode: p.code } });
       }
-
-      // Sans barcode : cherche si déjà en DB par nom exact, sinon crée
       const existing = await prisma.food.findFirst({ where: { name: { equals: name, mode: "insensitive" } } });
       if (existing) return existing;
       return prisma.food.create({ data: foodData });
     })
   );
 
-  // Fusionner : local en premier, dédupliquer par id
-  const localIds = new Set(local.map((f) => f.id));
-  const merged = [...local, ...offFoods.filter((f) => !localIds.has(f.id))];
+  // Cache USDA — exclut les barcodes déjà couverts par OFF
+  const offBarcodes = new Set(offFoods.map((f) => f.barcode).filter(Boolean));
+  const usdaFoods = await Promise.all(
+    usdaProducts
+      .filter((f) => !f.gtinUpc || !offBarcodes.has(f.gtinUpc))
+      .map(async (f) => {
+        const foodData = mapUsdaProduct(f);
+        if (foodData.barcode) {
+          return prisma.food.upsert({ where: { barcode: foodData.barcode }, update: {}, create: foodData });
+        }
+        const existing = await prisma.food.findFirst({ where: { name: { equals: foodData.name, mode: "insensitive" } } });
+        if (existing) return existing;
+        return prisma.food.create({ data: foodData });
+      })
+  );
+
+  // Fusion finale : local > OFF > USDA
+  const merged = [...local];
+  const seenMerge = new Set(local.map((f) => f.id));
+  for (const f of [...offFoods, ...usdaFoods]) {
+    if (!seenMerge.has(f.id)) { seenMerge.add(f.id); merged.push(f); }
+  }
 
   return NextResponse.json(merged.slice(0, 25));
 }
