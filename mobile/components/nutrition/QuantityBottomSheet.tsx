@@ -17,7 +17,7 @@ export function QuantityBottomSheet({ food, onConfirm, onClose, loading }: Props
 
   useEffect(() => {
     if (food) {
-      setGrams("100");
+      setGrams(String(food.defaultQuantity ?? 100));
       Animated.spring(slideAnim, { toValue: 0, useNativeDriver: true, tension: 80, friction: 12 }).start();
     } else {
       Animated.timing(slideAnim, { toValue: 300, duration: 200, useNativeDriver: true }).start();
@@ -26,11 +26,17 @@ export function QuantityBottomSheet({ food, onConfirm, onClose, loading }: Props
 
   if (!food) return null;
 
+  const isMl = food.unit === "ML";
+  const unit = isMl ? "ml" : "g";
   const qty = parseFloat(grams) || 0;
   const calories = Math.round((food.caloriesPer100g * qty) / 100);
   const protein = Math.round((food.proteinPer100g * qty) / 100 * 10) / 10;
   const carbs = Math.round((food.carbsPer100g * qty) / 100 * 10) / 10;
   const fat = Math.round((food.fatPer100g * qty) / 100 * 10) / 10;
+
+  const qtyLabel = isMl && qty >= 1000
+    ? `${(qty / 1000).toFixed(1).replace(".", ",")} L`
+    : `${qty} ${unit}`;
 
   return (
     <Modal transparent animationType="none" visible={!!food} onRequestClose={onClose}>
@@ -52,8 +58,12 @@ export function QuantityBottomSheet({ food, onConfirm, onClose, loading }: Props
               selectTextOnFocus
               style={{ flex: 1, color: Colors.textPrimary, fontSize: FontSize.xxl, fontWeight: "900", textAlign: "center" }}
             />
-            <Text style={{ color: Colors.textMuted, fontSize: FontSize.lg }}>g</Text>
+            <Text style={{ color: Colors.textMuted, fontSize: FontSize.lg }}>{unit}</Text>
           </View>
+
+          {isMl && qty >= 1000 && (
+            <Text style={{ color: Colors.textMuted, fontSize: FontSize.xs, textAlign: "center", marginTop: -Spacing.md, marginBottom: Spacing.md }}>{qtyLabel}</Text>
+          )}
 
           {/* Aperçu macros */}
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: Spacing.xl }}>

@@ -1,8 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
-import { FoodSource } from "@prisma/client";
+import { FoodSource, FoodUnit } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getUser } from "@/lib/auth/get-user";
+
+const BEVERAGE_KEYWORDS = [
+  "eau", "water", "jus", "juice", "lait", "milk", "soda", "café", "coffee",
+  "thé", "tea", "bière", "beer", "vin", "wine", "boisson", "drink", "beverage",
+  "limonade", "lemonade", "sirop", "syrup", "smoothie", "kombucha", "kéfir", "kefir",
+  "nectar", "infusion", "tisane", "bouillon", "broth", "coca-cola", "pepsi", "fanta",
+  "sprite", "orangina", "oasis", "vittel", "evian", "perrier", "volvic", "badoit",
+  "contrex", "lipton", "activia drink", "yakult",
+];
+
+function getBeverageProps(name: string): { unit: FoodUnit; defaultQuantity: number } | null {
+  const lower = name.toLowerCase();
+  if (BEVERAGE_KEYWORDS.some((kw) => lower.includes(kw))) {
+    return { unit: FoodUnit.ML, defaultQuantity: 250 };
+  }
+  return null;
+}
 
 const createFoodSchema = z.object({
   name: z.string().min(1).max(200),
@@ -86,8 +103,9 @@ async function searchUSDA(query: string): Promise<UsdaFood[]> {
 function mapUsdaProduct(f: UsdaFood) {
   const get = (id: number) => f.foodNutrients.find((n) => n.nutrientId === id)?.value ?? 0;
   const raw = f.description;
+  const name = raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase();
   return {
-    name: raw.charAt(0).toUpperCase() + raw.slice(1).toLowerCase(),
+    name,
     brand: f.brandOwner?.trim() || null,
     barcode: f.gtinUpc || null,
     caloriesPer100g: get(1008),
@@ -96,6 +114,7 @@ function mapUsdaProduct(f: UsdaFood) {
     fatPer100g: get(1004),
     fiberPer100g: get(1079) || null,
     source: FoodSource.OPEN_FOOD_FACTS,
+    ...(getBeverageProps(name) ?? {}),
   };
 }
 
@@ -153,6 +172,7 @@ export async function GET(req: NextRequest) {
         fatPer100g: p.nutriments.fat_100g ?? 0,
         fiberPer100g: p.nutriments.fiber_100g ?? null,
         source: FoodSource.OPEN_FOOD_FACTS,
+        ...(getBeverageProps(name) ?? {}),
       };
       if (p.code) {
         return prisma.food.upsert({ where: { barcode: p.code }, update: {}, create: { ...foodData, barcode: p.code } });

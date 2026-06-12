@@ -102,7 +102,11 @@ model Food {
   source   FoodSource @default(CUSTOM)
   offId    String?    @unique // Open Food Facts ID (barcode ou off-id)
 
-  // Valeurs nutritionnelles pour 100g
+  // Unité de mesure et quantité par défaut proposée à l'utilisateur
+  unit            FoodUnit @default(G)
+  defaultQuantity Float    @default(100)
+
+  // Valeurs nutritionnelles pour 100g / 100ml
   caloriesPer100g Float
   proteinPer100g  Float
   carbsPer100g    Float
@@ -120,6 +124,11 @@ model Food {
   @@index([barcode])
   @@index([name])
   @@map("foods")
+}
+
+enum FoodUnit {
+  G  // grammes (solides)
+  ML // millilitres (boissons)
 }
 
 enum FoodSource {
