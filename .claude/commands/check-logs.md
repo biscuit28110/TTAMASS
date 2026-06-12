@@ -60,6 +60,19 @@ Si aucune erreur → `✅ Aucune erreur détectée dans les logs récents.`
 | `500` backend | Lire le stack complet ci-dessus |
 | Requête > 2s | Ajouter un index ou un cache sur cet endpoint |
 
+### 5. Questions de suivi
+
+Après le rapport, toujours poser des questions contextuelles basées sur ce qui a été trouvé. Exemples selon le cas :
+
+- Si erreur 500 identifiée : "Veux-tu que je corrige le bug sur `[endpoint]` ?"
+- Si requête lente : "Veux-tu que j'ajoute un index ou un cache sur `[endpoint]` ?"
+- Si 401 répétés : "Veux-tu que je vérifie la logique de refresh du token côté mobile ?"
+- Si quota dépassé : "Veux-tu que je remplace le provider ou que j'ajoute un rate-limit ?"
+- Si aucune erreur : "Tout semble OK — veux-tu que j'augmente la fenêtre d'analyse (plus de lignes) ?"
+
+Formule toujours les questions de façon courte et directe, maximum 2-3 questions, uniquement sur ce qui a été observé dans les logs.
+
 ## Règles
 - Ne pas afficher les lignes de démarrage npm/Next.js (`npm warn`, `▲ Next.js`, `✓ Ready`) — trop verbeux
 - Trier par criticité : erreurs > warnings > lenteur
+- Toujours terminer par des questions de suivi (étape 5)
