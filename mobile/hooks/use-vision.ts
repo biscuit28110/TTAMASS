@@ -133,8 +133,6 @@ export function useVision(meal: MealType) {
 
         const cached = await api.post<{ id: string }>("/api/nutrition/foods", {
           name: food.name,
-          brand: null,
-          barcode: null,
           caloriesPer100g: clamp(food.calories * ratio, 900),
           proteinPer100g: clamp(food.proteinG * ratio, 100),
           carbsPer100g: clamp(food.carbsG * ratio, 100),
