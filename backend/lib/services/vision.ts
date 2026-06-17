@@ -30,6 +30,19 @@ Réponds UNIQUEMENT en JSON valide avec ce format exact :
 
 Base tes estimations sur les valeurs nutritionnelles standard françaises. Sois précis mais honnête sur les incertitudes.`;
 
+// Llama peut produire du JSON imparfait (fences markdown, virgules traînantes).
+// On extrait le bloc {...} et on nettoie avant parsing.
+function parseVisionJson(rawText: string): unknown {
+  const match = rawText.match(/\{[\s\S]*\}/);
+  if (!match) {
+    throw new Error("Llama Vision n'a pas retourné un JSON valide");
+  }
+  const cleaned = match[0]
+    .replace(/,\s*([}\]])/g, "$1") // virgules traînantes
+    .replace(/\/\/[^\n\r]*/g, ""); // commentaires de ligne
+  return JSON.parse(cleaned);
+}
+
 export async function analyzeImage(
   imageBase64: string,
   mediaType: "image/jpeg" | "image/png" | "image/webp"
@@ -37,6 +50,7 @@ export async function analyzeImage(
   const response = await groq.chat.completions.create({
     model: "meta-llama/llama-4-scout-17b-16e-instruct",
     max_tokens: 1024,
+    response_format: { type: "json_object" },
     messages: [
       {
         role: "user",
@@ -60,12 +74,7 @@ export async function analyzeImage(
   const inputTokens = response.usage?.prompt_tokens ?? 0;
   const outputTokens = response.usage?.completion_tokens ?? 0;
 
-  const jsonMatch = rawText.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    throw new Error("Llama Vision n'a pas retourné un JSON valide");
-  }
-
-  const parsed = JSON.parse(jsonMatch[0]) as {
+  const parsed = parseVisionJson(rawText) as {
     description: string;
     foods: DetectedFood[];
   };
