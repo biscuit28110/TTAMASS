@@ -2,6 +2,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useHome } from "@/hooks/use-home";
+import { useRefreshOnForeground } from "@/hooks/use-refresh-on-foreground";
 import { MacroRing } from "@/components/ui/MacroRing";
 import { SkeletonBlock } from "@/components/ui/SkeletonBlock";
 import { Colors, FontSize, Spacing } from "@/constants/theme";
@@ -9,6 +10,8 @@ import { Colors, FontSize, Spacing } from "@/constants/theme";
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { summary, profile, loading, error, caloriesLeft, latestWeight, weightTrend, refresh } = useHome();
+
+  useRefreshOnForeground(refresh);
 
   const targets = summary?.targets ?? null;
   const totals = summary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };

@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndic
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { router } from "expo-router";
 import { useNutrition, MealType } from "@/hooks/use-nutrition";
+import { useRefreshOnForeground } from "@/hooks/use-refresh-on-foreground";
 import { MealSection } from "@/components/nutrition/MealSection";
 import { Colors, FontSize, Spacing } from "@/constants/theme";
 
@@ -13,6 +14,7 @@ export default function NutritionScreen() {
   const { data, loading, error, load, deleteEntry } = useNutrition();
 
   useEffect(() => { load(); }, [load]);
+  useRefreshOnForeground(() => load());
 
   const handleAdd = (meal: MealType) => {
     router.push({ pathname: "/nutrition/search", params: { meal } });
