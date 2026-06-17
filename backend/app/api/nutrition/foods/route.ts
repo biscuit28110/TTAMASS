@@ -23,13 +23,13 @@ function getBeverageProps(name: string): { unit: FoodUnit; defaultQuantity: numb
 
 const createFoodSchema = z.object({
   name: z.string().min(1).max(200),
-  brand: z.string().max(100).optional(),
-  barcode: z.string().max(50).optional(),
+  brand: z.string().max(100).nullish(),
+  barcode: z.string().max(50).nullish(),
   caloriesPer100g: z.number().nonnegative().max(10000),
   proteinPer100g: z.number().nonnegative().max(100),
   carbsPer100g: z.number().nonnegative().max(100),
   fatPer100g: z.number().nonnegative().max(100),
-  fiberPer100g: z.number().nonnegative().max(100).optional(),
+  fiberPer100g: z.number().nonnegative().max(100).nullish(),
 });
 
 interface OFFProduct {
