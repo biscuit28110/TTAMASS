@@ -1,4 +1,5 @@
 import { useState, useCallback } from "react";
+import { Alert, Linking } from "react-native";
 import * as ImagePicker from "expo-image-picker";
 import * as Haptics from "expo-haptics";
 import { api } from "@/lib/api/client";
@@ -52,7 +53,18 @@ export function useVision(meal: MealType) {
     setError(null);
     const perm = await ImagePicker.requestMediaLibraryPermissionsAsync();
     if (!perm.granted) {
-      setError("Permission d'accès à la galerie refusée");
+      if (!perm.canAskAgain) {
+        Alert.alert(
+          "Accès à la galerie requis",
+          "Tu as refusé l'accès aux photos. Active-le dans les paramètres de l'appli pour utiliser cette fonctionnalité.",
+          [
+            { text: "Annuler", style: "cancel" },
+            { text: "Ouvrir les paramètres", onPress: () => Linking.openSettings() },
+          ]
+        );
+      } else {
+        setError("Permission d'accès à la galerie refusée");
+      }
       return;
     }
 
@@ -117,16 +129,16 @@ export function useVision(meal: MealType) {
 
       for (const food of result.foods) {
         const ratio = food.quantityG > 0 ? 100 / food.quantityG : 1;
+        const clamp = (v: number, max: number) => Math.min(Math.max(0, Math.round(v * 10) / 10), max);
 
         const cached = await api.post<{ id: string }>("/api/nutrition/foods", {
           name: food.name,
           brand: null,
           barcode: null,
-          caloriesPer100g: Math.round(food.calories * ratio),
-          proteinPer100g: Math.round(food.proteinG * ratio * 10) / 10,
-          carbsPer100g: Math.round(food.carbsG * ratio * 10) / 10,
-          fatPer100g: Math.round(food.fatG * ratio * 10) / 10,
-          source: "AI_DETECTED",
+          caloriesPer100g: clamp(food.calories * ratio, 900),
+          proteinPer100g: clamp(food.proteinG * ratio, 100),
+          carbsPer100g: clamp(food.carbsG * ratio, 100),
+          fatPer100g: clamp(food.fatG * ratio, 100),
         });
 
         await api.post("/api/nutrition/food-entries", {
