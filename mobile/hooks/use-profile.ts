@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { router } from "expo-router";
-import { profileApi, UserProfile } from "@/lib/api/nutrition";
+import { profileApi, UserProfile, ActivityLevel, Goal } from "@/lib/api/nutrition";
 import { api } from "@/lib/api/client";
 import { useAuthStore } from "@/lib/stores/auth.store";
 
@@ -45,10 +45,29 @@ export function useProfile() {
     }
   }, [profile]);
 
+  const updatePersonal = useCallback(async (data: {
+    weightKg?: number;
+    heightCm?: number;
+    activityLevel?: ActivityLevel;
+    goal?: Goal;
+  }) => {
+    if (!profile) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await api.patch<UserProfile>("/api/auth/profile", data);
+      setProfile(updated);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : "Erreur");
+    } finally {
+      setSaving(false);
+    }
+  }, [profile]);
+
   const logout = useCallback(async () => {
     await signOut();
     router.replace("/(auth)/login");
   }, [signOut]);
 
-  return { profile, loading, saving, error, load, updateTargets, signOut: logout };
+  return { profile, loading, saving, error, load, updateTargets, updatePersonal, signOut: logout };
 }

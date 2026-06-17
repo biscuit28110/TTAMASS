@@ -6,6 +6,9 @@ export interface DailySummary {
   targets: { calories: number | null; proteinG: number | null; carbsG: number | null; fatG: number | null };
 }
 
+export type ActivityLevel = "SEDENTARY" | "LIGHTLY_ACTIVE" | "MODERATELY_ACTIVE" | "VERY_ACTIVE" | "EXTRA_ACTIVE";
+export type Goal = "RECOMPOSITION" | "BULK" | "CUT" | "MAINTENANCE";
+
 export interface UserProfile {
   currentStreak: number;
   longestStreak: number;
@@ -16,7 +19,8 @@ export interface UserProfile {
   plan: "FREE" | "PREMIUM";
   weightKg: number | null;
   heightCm: number | null;
-  goal: string | null;
+  activityLevel: ActivityLevel | null;
+  goal: Goal | null;
 }
 
 export interface BodyMetric {
