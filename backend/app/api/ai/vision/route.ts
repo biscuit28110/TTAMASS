@@ -53,9 +53,11 @@ export async function POST(req: NextRequest) {
     const result = await analyzeImage(image, mediaType);
     return NextResponse.json({ ...result, mealType });
   } catch (err) {
-    console.error("[vision] analyzeImage error:", err);
+    const detail = err instanceof Error ? err.message : String(err);
+    const status = (err as { status?: number })?.status;
+    console.error("[vision] analyzeImage error:", status, detail, err);
     return NextResponse.json(
-      { error: "Erreur lors de l'analyse de l'image" },
+      { error: "Erreur lors de l'analyse de l'image", detail, status },
       { status: 500 }
     );
   }
