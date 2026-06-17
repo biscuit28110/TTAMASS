@@ -56,7 +56,7 @@ export default function VisionScreen() {
                 Analyse IA de ton repas
               </Text>
               <Text style={{ color: Colors.textMuted, fontSize: FontSize.sm, textAlign: "center", lineHeight: 20 }}>
-                Prends une photo de ton assiette ou choisis une image — Claude identifie les aliments et estime les macros.
+                Prends une photo de ton assiette ou choisis une image — l'IA identifie les aliments et estime les macros.
               </Text>
             </View>
 
@@ -92,7 +92,7 @@ export default function VisionScreen() {
               Analyse en cours…
             </Text>
             <Text style={{ color: Colors.textMuted, fontSize: FontSize.sm, marginTop: Spacing.sm, textAlign: "center" }}>
-              Claude identifie les aliments et calcule les macros
+              L'IA identifie les aliments et calcule les macros
             </Text>
           </View>
         )}
