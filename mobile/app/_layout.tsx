@@ -59,6 +59,7 @@ export default function RootLayout() {
               <Stack.Screen name="(tabs)" />
               <Stack.Screen name="onboarding" />
               <Stack.Screen name="profile/index" />
+              <Stack.Screen name="notifications/index" />
               <Stack.Screen name="paywall/index" options={{ presentation: "modal" }} />
             </Stack>
           </ErrorBoundary>

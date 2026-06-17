@@ -310,6 +310,18 @@ export default function ProfileScreen() {
 
         {error && <Text style={{ color: Colors.error, textAlign: "center", marginBottom: Spacing.md }}>{error}</Text>}
 
+        {/* Notifications */}
+        <TouchableOpacity
+          onPress={() => router.push("/notifications")}
+          style={{ backgroundColor: Colors.surface, borderRadius: 14, padding: Spacing.lg, flexDirection: "row", alignItems: "center", justifyContent: "space-between", borderWidth: 1, borderColor: Colors.border, marginBottom: Spacing.md }}
+        >
+          <View style={{ flexDirection: "row", alignItems: "center", gap: Spacing.sm }}>
+            <Text style={{ fontSize: 18 }}>🔔</Text>
+            <Text style={{ color: Colors.textPrimary, fontWeight: "700" }}>Notifications</Text>
+          </View>
+          <Text style={{ color: Colors.textMuted, fontSize: FontSize.lg }}>→</Text>
+        </TouchableOpacity>
+
         {/* Sign out */}
         <TouchableOpacity
           onPress={handleSignOut}

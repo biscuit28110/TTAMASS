@@ -37,6 +37,12 @@
           "photosPermission": "TTAMASS utilise tes photos pour analyser ton repas.",
           "cameraPermission": "TTAMASS utilise l'appareil photo pour analyser ton repas."
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#E53935"
+        }
       ]
     ],
     "scheme": "ttamass",
