@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { AppState } from "react-native";
 import * as SecureStore from "expo-secure-store";
 import { createClient } from "@supabase/supabase-js";
 
@@ -29,6 +30,17 @@ supabase.auth.onAuthStateChange(async (_event, session) => {
     await SecureStore.setItemAsync("access_token", session.access_token);
   } else {
     await SecureStore.deleteItemAsync("access_token");
+  }
+});
+
+// N'auto-rafraîchit le token QUE quand l'app est au premier plan.
+// En arrière-plan, le Keychain refuse l'accès ("User interaction is not allowed")
+// et les requêtes réseau échouent — ce qui spammait la console.
+AppState.addEventListener("change", (state) => {
+  if (state === "active") {
+    supabase.auth.startAutoRefresh();
+  } else {
+    supabase.auth.stopAutoRefresh();
   }
 });
 
