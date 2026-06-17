@@ -6,7 +6,9 @@ import {
   ReminderKey,
   requestPermission,
   rescheduleAll,
+  getExpoPushToken,
 } from "@/lib/notifications";
+import { notificationsApi } from "@/lib/api/notifications";
 
 const STORAGE_KEY = "notif_prefs";
 
@@ -45,6 +47,7 @@ export function useNotifications() {
   }, []);
 
   // Active/désactive un rappel. Au premier activé, demande la permission.
+  // "streak" est piloté serveur : on enregistre le token + l'opt-in côté backend.
   const toggle = useCallback(
     async (key: ReminderKey, enabled: boolean) => {
       if (enabled) {
@@ -55,6 +58,16 @@ export function useNotifications() {
         }
         setPermissionDenied(false);
       }
+
+      if (key === "streak") {
+        if (enabled) {
+          const token = await getExpoPushToken();
+          await notificationsApi.register({ expoPushToken: token, notifStreakReminder: true });
+        } else {
+          await notificationsApi.register({ notifStreakReminder: false });
+        }
+      }
+
       await persist({ ...prefs, [key]: { ...prefs[key], enabled } });
     },
     [prefs, persist]

@@ -47,6 +47,10 @@ model UserProfile {
   longestStreak Int @default(0)
   lastTrackedAt DateTime?
 
+  // Notifications push (Expo)
+  expoPushToken      String?
+  notifStreakReminder Boolean @default(false)
+
   // Relations
   foodEntries    FoodEntry[]
   bodyMetrics    BodyMetric[]

@@ -90,7 +90,12 @@ export default function NotificationsScreen() {
                       thumbColor="#fff"
                     />
                   </View>
-                  {cfg.enabled && <HourStepper hour={cfg.hour} onChange={(h) => setHour(key, h)} />}
+                  {cfg.enabled && key !== "streak" && <HourStepper hour={cfg.hour} onChange={(h) => setHour(key, h)} />}
+                  {cfg.enabled && key === "streak" && (
+                    <Text style={{ color: Colors.textMuted, fontSize: FontSize.xs, marginTop: Spacing.sm, fontStyle: "italic" }}>
+                      Envoyé automatiquement le soir si tu n'as rien loggé.
+                    </Text>
+                  )}
                 </View>
               );
             })}

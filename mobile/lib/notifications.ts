@@ -1,5 +1,6 @@
 import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 
 // Affiche les notifications même quand l'app est au premier plan
@@ -69,12 +70,16 @@ export async function requestPermission(): Promise<boolean> {
   return status === "granted";
 }
 
+// Rappels programmés localement sur l'appareil (time-based).
+// "streak" est exclu : il est piloté par le serveur (push intelligent, voir backend).
+const LOCAL_KEYS: ReminderKey[] = ["meal", "workout", "calorieGoal"];
+
 // Reprogramme tous les rappels locaux depuis les préférences.
 // Annule d'abord tout pour éviter les doublons.
 export async function rescheduleAll(prefs: NotifPrefs): Promise<void> {
   await Notifications.cancelAllScheduledNotificationsAsync();
 
-  for (const key of Object.keys(prefs) as ReminderKey[]) {
+  for (const key of LOCAL_KEYS) {
     const cfg = prefs[key];
     if (!cfg.enabled) continue;
     const { title, body } = REMINDER_LABELS[key];
@@ -87,5 +92,24 @@ export async function rescheduleAll(prefs: NotifPrefs): Promise<void> {
         minute: 0,
       },
     });
+  }
+}
+
+// Récupère le token Expo Push (pour les notifications pilotées serveur).
+// Nécessite un dev build (ne fonctionne pas dans Expo Go) et la permission.
+export async function getExpoPushToken(): Promise<string | null> {
+  if (!Device.isDevice) return null;
+  const granted = await requestPermission();
+  if (!granted) return null;
+
+  const projectId =
+    Constants.expoConfig?.extra?.eas?.projectId ?? Constants.easConfig?.projectId;
+  if (!projectId) return null;
+
+  try {
+    const { data } = await Notifications.getExpoPushTokenAsync({ projectId });
+    return data;
+  } catch {
+    return null;
   }
 }
