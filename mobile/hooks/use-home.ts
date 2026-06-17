@@ -1,6 +1,6 @@
 import { useState, useCallback } from "react";
 import { router } from "expo-router";
-import { nutritionApi, profileApi, bodyApi, DailySummary, UserProfile, BodyMetric } from "@/lib/api/nutrition";
+import { nutritionApi, profileApi, bodyApi, summaryApi, DailySummary, UserProfile, BodyMetric, WeeklySummary } from "@/lib/api/nutrition";
 import { ApiError } from "@/lib/api/client";
 
 function todayStr() {
@@ -12,6 +12,7 @@ export function useHome() {
   const [summary, setSummary] = useState<DailySummary | null>(null);
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [metrics, setMetrics] = useState<BodyMetric[]>([]);
+  const [weekly, setWeekly] = useState<WeeklySummary | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -21,14 +22,16 @@ export function useHome() {
     if (!silent) setLoading(true);
     setError(null);
     try {
-      const [s, p, m] = await Promise.all([
+      const [s, p, m, w] = await Promise.all([
         nutritionApi.getDaily(todayStr()),
         profileApi.get(),
         bodyApi.getMetrics(2),
+        summaryApi.getWeekly(),
       ]);
       setSummary(s);
       setProfile(p);
       setMetrics(m);
+      setWeekly(w);
     } catch (e: unknown) {
       // 404 on profile means the user hasn't completed onboarding yet
       if (e instanceof ApiError && e.status === 404) {
@@ -48,5 +51,5 @@ export function useHome() {
       ? metrics[0].weightKg - metrics[1].weightKg
       : null;
 
-  return { summary, profile, loading, error, caloriesLeft, latestWeight, weightTrend, refresh: load };
+  return { summary, profile, weekly, loading, error, caloriesLeft, latestWeight, weightTrend, refresh: load };
 }

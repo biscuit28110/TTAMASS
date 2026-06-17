@@ -8,9 +8,18 @@ import { MacroRing } from "@/components/ui/MacroRing";
 import { SkeletonBlock } from "@/components/ui/SkeletonBlock";
 import { Colors, FontSize, Spacing } from "@/constants/theme";
 
+function WeekStat({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <View style={{ alignItems: "center", flex: 1 }}>
+      <Text style={{ color: color ?? Colors.textPrimary, fontSize: FontSize.lg, fontWeight: "900" }}>{value}</Text>
+      <Text style={{ color: Colors.textMuted, fontSize: 10, marginTop: 2, textAlign: "center" }}>{label}</Text>
+    </View>
+  );
+}
+
 export default function HomeScreen() {
   const insets = useSafeAreaInsets();
-  const { summary, profile, loading, error, caloriesLeft, latestWeight, weightTrend, refresh } = useHome();
+  const { summary, profile, weekly, loading, error, caloriesLeft, latestWeight, weightTrend, refresh } = useHome();
 
   // Recharge à chaque focus (skeletons au 1er affichage, mise à jour silencieuse ensuite)
   const firstFocus = useRef(true);
@@ -87,6 +96,29 @@ export default function HomeScreen() {
             <MacroRing label="Protéines" current={totals.proteinG} target={targets?.proteinG ?? 0} color={Colors.red} />
             <MacroRing label="Glucides" current={totals.carbsG} target={targets?.carbsG ?? 0} color={Colors.violet} />
             <MacroRing label="Lipides" current={totals.fatG} target={targets?.fatG ?? 0} color={Colors.warning} />
+          </View>
+        )}
+      </View>
+
+      {/* Résumé de la semaine */}
+      <View style={{ backgroundColor: Colors.surface, borderRadius: 20, padding: Spacing.xl, marginBottom: Spacing.md, borderWidth: 1, borderColor: Colors.border }}>
+        <Text style={{ color: Colors.textSecondary, fontSize: FontSize.sm, marginBottom: Spacing.lg }}>Résumé de la semaine</Text>
+        {loading ? (
+          <SkeletonBlock height={48} />
+        ) : (
+          <View style={{ flexDirection: "row", justifyContent: "space-around" }}>
+            <WeekStat label="Moy. cals/j" value={String(weekly?.avgDailyCalories ?? 0)} />
+            <WeekStat label="Séances" value={String(weekly?.workoutSessions ?? 0)} color={Colors.red} />
+            <WeekStat
+              label="Poids"
+              value={
+                weekly?.weightChangeKg == null
+                  ? "—"
+                  : `${weekly.weightChangeKg > 0 ? "+" : ""}${weekly.weightChangeKg.toFixed(1)} kg`
+              }
+              color={weekly?.weightChangeKg == null ? Colors.textMuted : weekly.weightChangeKg <= 0 ? Colors.success : Colors.error}
+            />
+            <WeekStat label="Jours suivis" value={`${weekly?.daysLogged ?? 0}/7`} color={Colors.warning} />
           </View>
         )}
       </View>

@@ -29,6 +29,15 @@ export interface BodyMetric {
   weightKg: number | null;
 }
 
+export interface WeeklySummary {
+  startDate: string;
+  endDate: string;
+  avgDailyCalories: number;
+  daysLogged: number;
+  workoutSessions: number;
+  weightChangeKg: number | null;
+}
+
 export const nutritionApi = {
   getDaily: (date: string) => api.get<DailySummary>(`/api/nutrition/daily?date=${date}`),
 };
@@ -39,4 +48,8 @@ export const profileApi = {
 
 export const bodyApi = {
   getMetrics: (limit = 2) => api.get<BodyMetric[]>(`/api/body/metrics?limit=${limit}`),
+};
+
+export const summaryApi = {
+  getWeekly: () => api.get<WeeklySummary>("/api/summary/weekly"),
 };
