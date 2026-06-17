@@ -1,7 +1,7 @@
-import { useEffect } from "react";
+import { useCallback, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useNutrition, MealType } from "@/hooks/use-nutrition";
 import { useRefreshOnForeground } from "@/hooks/use-refresh-on-foreground";
 import { MealSection } from "@/components/nutrition/MealSection";
@@ -13,8 +13,16 @@ export default function NutritionScreen() {
   const insets = useSafeAreaInsets();
   const { data, loading, error, load, deleteEntry } = useNutrition();
 
-  useEffect(() => { load(); }, [load]);
-  useRefreshOnForeground(() => load());
+  // Recharge à chaque focus : spinner au 1er affichage, mise à jour silencieuse
+  // ensuite (ex. retour après ajout d'un aliment via recherche/scan/photo).
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      load(undefined, !firstFocus.current);
+      firstFocus.current = false;
+    }, [load])
+  );
+  useRefreshOnForeground(() => load(undefined, true));
 
   const handleAdd = (meal: MealType) => {
     router.push({ pathname: "/nutrition/search", params: { meal } });

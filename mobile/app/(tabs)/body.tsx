@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "expo-router";
 import { useBody, Period } from "@/hooks/use-body";
 import { useRefreshOnForeground } from "@/hooks/use-refresh-on-foreground";
 import { WeightChart } from "@/components/body/WeightChart";
@@ -15,8 +16,15 @@ export default function BodyScreen() {
   const { metrics, period, loading, saving, error, load, changePeriod, save, latest, trend, weightData } = useBody();
   const [sheetOpen, setSheetOpen] = useState(false);
 
-  useEffect(() => { load(); }, [load]);
-  useRefreshOnForeground(() => load());
+  // Recharge à chaque focus : spinner au 1er affichage, mise à jour silencieuse ensuite
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      load(undefined, !firstFocus.current);
+      firstFocus.current = false;
+    }, [load])
+  );
+  useRefreshOnForeground(() => load(undefined, true));
 
   const handleSave = async (fields: Parameters<typeof save>[0]) => {
     const ok = await save(fields);

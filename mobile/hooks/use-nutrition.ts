@@ -31,8 +31,10 @@ export function useNutrition() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async (date = todayStr()) => {
-    setLoading(true);
+  // silent : recharge sans afficher le spinner (garde les données à l'écran).
+  // Utilisé au refocus pour mettre à jour discrètement après un ajout.
+  const load = useCallback(async (date = todayStr(), silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const result = await api.get<DailyData>(`/api/nutrition/daily?date=${date}`);
@@ -40,7 +42,7 @@ export function useNutrition() {
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
 

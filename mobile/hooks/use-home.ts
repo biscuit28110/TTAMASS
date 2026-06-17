@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback } from "react";
 import { router } from "expo-router";
 import { nutritionApi, profileApi, bodyApi, DailySummary, UserProfile, BodyMetric } from "@/lib/api/nutrition";
 import { ApiError } from "@/lib/api/client";
@@ -15,8 +15,10 @@ export function useHome() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  // silent : recharge sans afficher les skeletons (garde les données à l'écran).
+  // Utilisé au refocus pour mettre à jour discrètement après un ajout.
+  const load = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const [s, p, m] = await Promise.all([
@@ -35,11 +37,9 @@ export function useHome() {
       }
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, []);
-
-  useEffect(() => { load(); }, [load]);
 
   const caloriesLeft = (profile?.targetCalories ?? 0) - (summary?.totals.calories ?? 0);
   const latestWeight = metrics[0]?.weightKg ?? null;

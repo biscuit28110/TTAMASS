@@ -1,6 +1,7 @@
+import { useCallback, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { router } from "expo-router";
+import { router, useFocusEffect } from "expo-router";
 import { useHome } from "@/hooks/use-home";
 import { useRefreshOnForeground } from "@/hooks/use-refresh-on-foreground";
 import { MacroRing } from "@/components/ui/MacroRing";
@@ -11,7 +12,16 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const { summary, profile, loading, error, caloriesLeft, latestWeight, weightTrend, refresh } = useHome();
 
-  useRefreshOnForeground(refresh);
+  // Recharge à chaque focus (skeletons au 1er affichage, mise à jour silencieuse ensuite)
+  const firstFocus = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      refresh(!firstFocus.current);
+      firstFocus.current = false;
+    }, [refresh])
+  );
+
+  useRefreshOnForeground(() => refresh(true));
 
   const targets = summary?.targets ?? null;
   const totals = summary?.totals ?? { calories: 0, proteinG: 0, carbsG: 0, fatG: 0 };
@@ -26,7 +36,7 @@ export default function HomeScreen() {
   if (error) return (
     <View style={{ flex: 1, backgroundColor: Colors.background, alignItems: "center", justifyContent: "center", padding: Spacing.lg }}>
       <Text style={{ color: Colors.error, textAlign: "center", marginBottom: Spacing.md }}>{error}</Text>
-      <TouchableOpacity onPress={refresh} style={{ backgroundColor: Colors.surface, padding: Spacing.md, borderRadius: 12 }}>
+      <TouchableOpacity onPress={() => refresh()} style={{ backgroundColor: Colors.surface, padding: Spacing.md, borderRadius: 12 }}>
         <Text style={{ color: Colors.textPrimary }}>Réessayer</Text>
       </TouchableOpacity>
     </View>
@@ -36,7 +46,7 @@ export default function HomeScreen() {
     <ScrollView
       style={{ flex: 1, backgroundColor: Colors.background }}
       contentContainerStyle={{ paddingTop: insets.top + Spacing.lg, paddingHorizontal: Spacing.lg, paddingBottom: 100 }}
-      refreshControl={<RefreshControl refreshing={loading} onRefresh={refresh} tintColor={Colors.red} />}
+      refreshControl={<RefreshControl refreshing={loading} onRefresh={() => refresh()} tintColor={Colors.red} />}
     >
       {/* Header */}
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: Spacing.xl }}>

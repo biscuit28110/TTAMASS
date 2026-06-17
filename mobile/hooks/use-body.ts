@@ -13,11 +13,12 @@ export function useBody() {
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
 
-  const load = useCallback(async (p: Period = period) => {
+  // silent : recharge sans afficher le spinner (garde les données à l'écran).
+  const load = useCallback(async (p: Period = period, silent = false) => {
     // Cancel any in-flight request before starting a new one
     abortRef.current?.abort();
     abortRef.current = new AbortController();
-    setLoading(true);
+    if (!silent) setLoading(true);
     setError(null);
     try {
       const data = await getMetrics(PERIOD_LIMIT[p]);
@@ -26,7 +27,7 @@ export function useBody() {
       if (e instanceof Error && e.name === "AbortError") return;
       setError(e instanceof Error ? e.message : "Erreur de chargement");
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [period]);
 
