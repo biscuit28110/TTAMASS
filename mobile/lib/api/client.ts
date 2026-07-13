@@ -47,7 +47,8 @@ async function request<T>(
 
   if (!res.ok) {
     const error = await res.json().catch(() => ({ error: "Unknown error" }));
-    logger.error("net", `${method} ${path} → ${res.status} (${ms}ms)`, error);
+    const log = res.status >= 500 ? logger.error : logger.warn;
+    log("net", `${method} ${path} → ${res.status} (${ms}ms)`, error);
     throw new ApiError(error.error ?? `HTTP ${res.status}`, res.status);
   }
 
